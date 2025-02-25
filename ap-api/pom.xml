@@ -10,7 +10,7 @@
     </parent>
 
     <artifactId>ap-api</artifactId>
-    <description>定义客户端与服务端的api</description>
+    <description>定义客户端与服务端的通信接口</description>
 
     <properties>
     </properties>
