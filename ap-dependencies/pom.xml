@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>3.4.2</version>
+        <relativePath/>
+    </parent>
+    <groupId>org.agentpower</groupId>
+    <artifactId>ap-dependencies</artifactId>
+    <version>${ap.dependencies.version}</version>
+    <name>ap-dependencies</name>
+    <description>统一依赖管理</description>
+    <packaging>pom</packaging>
+
+    <properties>
+        <ap.dependencies.version>ap_1.0.1</ap.dependencies.version>
+
+        <!-- Utilities -->
+        <hutool.version>5.8.25</hutool.version>
+        <fastjson2.version>2.0.51</fastjson2.version>
+        <brotli4j.version>1.15.0</brotli4j.version>
+        <bcprov.version>1.78.1</bcprov.version>
+
+        <!-- Jupiter -->
+        <junit_jupiter_version>5.9.3</junit_jupiter_version>
+
+        <!-- graalvm build tools version -->
+        <native-build-tools-plugin.version>0.9.28</native-build-tools-plugin.version>
+
+    </properties>
+
+
+    <dependencyManagement>
+        <dependencies>
+            <!--           Base 		  -->
+            <dependency>
+                <groupId>org.apache.dubbo</groupId>
+                <artifactId>dubbo</artifactId>
+                <version>${dubbo.version}</version>
+            </dependency>
+
+            <!--           Utilities 		  -->
+            <!-- Crypto -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-debug-jdk15to18</artifactId>
+                <version>${bcprov.version}</version>
+            </dependency>
+
+            <!-- Hutool -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            <!-- fastjson2 -->
+            <dependency>
+                <groupId>com.alibaba.fastjson2</groupId>
+                <artifactId>fastjson2</artifactId>
+                <version>${fastjson2.version}</version>
+            </dependency>
+            <!-- brotli4j -->
+            <dependency>
+                <groupId>com.aayushatharva.brotli4j</groupId>
+                <artifactId>brotli4j</artifactId>
+                <version>${brotli4j.version}</version>
+            </dependency>
+
+            <!--JUnit Jupiter Engine to depend on the JUnit5 engine and JUnit 5 API -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-engine</artifactId>
+                <version>${junit_jupiter_version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-api</artifactId>
+                <version>${junit_jupiter_version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter-params</artifactId>
+                <version>${junit_jupiter_version}</version>
+                <scope>test</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.graalvm.buildtools</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <version>${native-build-tools-plugin.version}</version>
+            </plugin>
+            <!--            <plugin>-->
+            <!--                <groupId>org.springframework.boot</groupId>-->
+            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+            <!--                <version>${spring-boot.version}</version>-->
+            <!--            </plugin>-->
+        </plugins>
+    </build>
+</project>
