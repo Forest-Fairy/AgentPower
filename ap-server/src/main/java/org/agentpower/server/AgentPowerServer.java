@@ -1,18 +1,18 @@
 package org.agentpower.server;
 
-import org.agentpower.agent.func.FileReadFunc;
+import org.agentpower.agent.tool.AgentPowerToolCallback;
+import org.agentpower.api.FunctionRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 
 @Controller
-@RequestMapping(org.agentpower.api.AgentPowerServer.Const.SERVER)
+@RequestMapping("agent-power-server")
 public class AgentPowerServer {
 
-    @RequestMapping("receiveFileContent")
-    public int receiveFileContent(String requestId, String fileAbsPath, MultipartFile fileContentIfExist) throws IOException {
-        return FileReadFunc.receiveFileContent(requestId, fileAbsPath, fileContentIfExist.getInputStream());
+    @RequestMapping("receiveResult")
+    public int receiveFileContent(FunctionRequest request) throws IOException {
+        return AgentPowerToolCallback.receiveRequestResult(request);
     }
 }
