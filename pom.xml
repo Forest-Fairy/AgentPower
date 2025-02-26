@@ -13,9 +13,10 @@
     <modules>
         <module>ap-api</module>
         <module>ap-server</module>
-        <module>ap-cli-service</module>
+        <module>ap-cli</module>
         <module>ap-docs</module>
         <module>ap-front-end</module>
+        <module>ap-common</module>
     </modules>
 
     <properties>
@@ -57,11 +58,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.agentpower</groupId>
-            <artifactId>ap-api</artifactId>
-            <version>${ap.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
@@ -86,5 +82,17 @@
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 </project>

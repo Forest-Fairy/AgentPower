@@ -25,6 +25,9 @@
         <brotli4j.version>1.15.0</brotli4j.version>
         <bcprov.version>1.78.1</bcprov.version>
 
+        <!-- Spring AI -->
+        <spring-ai.version>1.0.0-M6</spring-ai.version>
+
         <!-- Jupiter -->
         <junit_jupiter_version>5.9.3</junit_jupiter_version>
 
@@ -70,26 +73,27 @@
                 <version>${brotli4j.version}</version>
             </dependency>
 
-            <!--JUnit Jupiter Engine to depend on the JUnit5 engine and JUnit 5 API -->
+            <!-- Spring AI -->
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>${junit_jupiter_version}</version>
-                <scope>test</scope>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-core</artifactId>
+                <scope>import</scope>
+                <version>${spring-ai.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
-                <version>${junit_jupiter_version}</version>
-                <scope>test</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-params</artifactId>
-                <version>${junit_jupiter_version}</version>
-                <scope>test</scope>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-spring-boot-autoconfigure</artifactId>
+                <scope>import</scope>
+                <version>${spring-ai.version}</version>
             </dependency>
 
+            <!--JUnit 5 -->
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit_jupiter_version}</version>
+                <scope>test</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
