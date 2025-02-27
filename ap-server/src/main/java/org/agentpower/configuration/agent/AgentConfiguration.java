@@ -1,4 +1,4 @@
-package org.agentpower.configuration.model;
+package org.agentpower.configuration.agent;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,20 +13,24 @@ import org.springframework.data.annotation.Id;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserAgentConfiguration {
+public class AgentConfiguration {
     @Id
     private String id;
-    private String userId;
     private String name;
+    private String userId;
 
-    /* 代理 类型: ollama, llm studio, etc. */
-    private String agentType;
+    /* 代理 平台: ollama, llm studio, etc. */
+    private String agentPlatform;
     /* 代理 url */
     private String agentBaseUrl;
     /* 代理 认证头 */
     private String agentAuthorization;
+    /* 代理 自定义请求头，JSON格式 */
+    private String agentCustomHeaders;
     /* 代理 模型 */
     private String agentModel;
+    /* 代理 微调参数，JSON格式 */
+    private String agentCustomOptions;
 
     private String createdTime;
     private String createdBy;

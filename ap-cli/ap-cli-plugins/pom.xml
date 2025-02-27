@@ -17,5 +17,12 @@
 
     <properties>
     </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.agentpower</groupId>
+            <artifactId>ap-cli-service</artifactId>
+            <version>${revision}</version>
+        </dependency>
+    </dependencies>
 
 </project>

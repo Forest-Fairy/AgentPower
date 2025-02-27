@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Configuration
-public class ToolConfiguration {
+public class ToolConfigurations {
 
     @Bean
     ToolCallbackResolver toolCallbackResolver(GenericApplicationContext applicationContext,
@@ -29,7 +29,9 @@ public class ToolConfiguration {
         var springBeanToolCallbackResolver = SpringBeanToolCallbackResolver.builder()
                 .applicationContext(applicationContext)
                 .build();
-        var agentPowerToolCallbackResolver = AgentPowerToolCallbackResolver.builder().build();
+        var agentPowerToolCallbackResolver = AgentPowerToolCallbackResolver.builder()
+                .applicationContext(applicationContext)
+                .build();
         return new DelegatingToolCallbackResolver(List.of(staticToolCallbackResolver, springBeanToolCallbackResolver, agentPowerToolCallbackResolver));
     }
 }

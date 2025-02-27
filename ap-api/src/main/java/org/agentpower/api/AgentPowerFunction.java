@@ -1,7 +1,5 @@
 package org.agentpower.api;
 
-import java.util.Map;
-
 public interface AgentPowerFunction {
     /**
      * @return 函数名称
@@ -14,8 +12,8 @@ public interface AgentPowerFunction {
     String functionDesc();
 
     /**
-     * @return 函数参数描述
+     * @return 函数参数格式 -> 参考 spring ai SpringBeanToolCallbackResolver 如何封装成字符串格式
      */
-    Map<String, Object> functionParamDesc();
+    String functionParamSchema();
 
 }

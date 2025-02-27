@@ -5,8 +5,8 @@ import lombok.Getter;
 
 import java.util.Map;
 
-@AllArgsConstructor
 @Getter
+@AllArgsConstructor
 public class FunctionRequest {
     private String requestId;
     private String functionName;

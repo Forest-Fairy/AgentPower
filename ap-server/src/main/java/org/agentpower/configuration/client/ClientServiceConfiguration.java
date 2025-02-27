@@ -1,4 +1,4 @@
-package org.agentpower.configuration.model;
+package org.agentpower.configuration.client;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,18 +13,18 @@ import org.springframework.data.annotation.Id;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserClientServiceConfiguration {
+public class ClientServiceConfiguration {
     @Id
     private String id;
-    private String userId;
     private String name;
+    private String userId;
 
     /* 代理服务url */
     private String serviceUrl;
-    /* 代理服务公钥 */
-    private String servicePKey;
-    /* 代理服务私钥 */
-    private String serviceSKey;
+    /* 客户端访问代理服务的请求头 */
+    private String headers;
+    /* 代理服务公钥 加密后交给浏览器客户端 */
+    private String servicePublicKey;
 
     private String createdTime;
     private String createdBy;
