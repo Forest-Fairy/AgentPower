@@ -7,12 +7,6 @@ import lombok.AllArgsConstructor;
 import org.agentpower.agent.model.ChatMessageModel;
 import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.infrastracture.Globals;
-import org.agentpower.provider.ResourceProvider;
-import org.agentpower.provider.impl.LocalFileResourceProvider;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -24,12 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
