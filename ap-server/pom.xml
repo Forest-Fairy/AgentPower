@@ -20,7 +20,13 @@
             <artifactId>ap-api</artifactId>
             <version>${revision}</version>
         </dependency>
+        <dependency>
+            <groupId>org.agentpower</groupId>
+            <artifactId>ap-common</artifactId>
+            <version>${revision}</version>
+        </dependency>
 
+        <!-- springboot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
@@ -38,6 +44,13 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- swagger -->
+        <dependency>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+        </dependency>
+
+
         <!-- Spring AI -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
@@ -52,5 +65,14 @@
             <artifactId>spring-ai-tika-document-reader</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+    </build>
 
 </project>
