@@ -1,10 +1,13 @@
 package org.agentpower.configuration.agent;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 
 /**
  * 用户代理配置
@@ -13,8 +16,9 @@ import org.springframework.data.annotation.Id;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public class AgentConfiguration {
-    @Id
+@Entity
+public class AgentModelConfiguration {
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String name;
     private String userId;

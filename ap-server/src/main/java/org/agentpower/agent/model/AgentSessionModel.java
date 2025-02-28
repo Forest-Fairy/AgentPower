@@ -1,26 +1,32 @@
 package org.agentpower.agent.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 
 /**
  * 会话ID
  */
+@Entity
 @Data
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
 public class AgentSessionModel {
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String name;
     private String userId;
 
-    private String agentConfigId;
-    private String agentClientConfigId;
+    /** 选择的代理配置 */
+    private String agentModelConfigId;
+    /** 选择的客户端配置 */
+    private String agentClientServiceConfigId;
 
 
     private String createdTime;

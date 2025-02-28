@@ -8,6 +8,7 @@ import org.agentpower.api.StatusCode;
 import org.agentpower.common.RSAUtil;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.infrastracture.Globals;
+import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.DefaultToolDefinition;
 import org.springframework.ai.tool.definition.ToolDefinition;
@@ -15,6 +16,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import sun.misc.Unsafe;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.*;
 
 public class AgentPowerToolCallback implements ToolCallback {
@@ -70,8 +72,8 @@ public class AgentPowerToolCallback implements ToolCallback {
         }
     }
 
+    private static final Map<String, Object> DEFINITION_CACHE =  new ConcurrentHashMap<>();
     private ToolDefinition getToolDefinitionInterval(String functionName) {
-        // TODO 发送消息给客户端 触发客户端调用客户端服务接口
         Globals.Client.sendMessage(requestId, buildEvent(
                 requestId, loginUserId, FunctionRequest.Event.GET_FUNCTION,
                 functionName, clientServiceConfiguration, null));
@@ -90,7 +92,6 @@ public class AgentPowerToolCallback implements ToolCallback {
         }
     }
 
-    private static final Map<String, Object> DEFINITION_CACHE =  new ConcurrentHashMap<>();
     public static int receiveFunctionInfo(String requestId, AgentPowerFunction agentPowerFunction) {
         String functionDefinitionKey = wrapFunctionDefinitionKey(requestId, agentPowerFunction.functionName());
         ToolDefinition definition = DefaultToolDefinition.builder()

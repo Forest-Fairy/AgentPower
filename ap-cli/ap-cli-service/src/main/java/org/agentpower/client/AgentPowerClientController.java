@@ -1,7 +1,6 @@
 package org.agentpower.client;
 
 import lombok.AllArgsConstructor;
-import org.agentpower.api.AgentPowerClientService;
 import org.agentpower.api.AgentPowerFunction;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.client.service.AgentPowerClientServiceImpl;
@@ -16,12 +15,13 @@ import java.util.Map;
 @Controller
 @RequestMapping("ap-client-service")
 @AllArgsConstructor
-public class AgentPowerClient {
+public class AgentPowerClientController {
     private final AgentPowerClientServiceImpl clientService;
 
     @PostMapping("call")
     public String call(String requestId, String functionName, Map<String, Object> params) {
-        return clientService.call(new FunctionRequest(requestId, functionName, params));
+        return clientService.call(new FunctionRequest(
+                requestId, functionName, FunctionRequest.Event.FUNC_CALL, params));
     }
 
     @GetMapping("listFunctions")

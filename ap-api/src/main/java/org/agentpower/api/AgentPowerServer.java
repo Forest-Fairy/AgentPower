@@ -8,6 +8,4 @@ public interface AgentPowerServer {
 
     int sendFunctionList(String requestId, List<AgentPowerFunction> functions);
 
-    int sendFunction(String requestId, AgentPowerFunction function);
-
 }

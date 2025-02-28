@@ -14,9 +14,4 @@ public interface AgentPowerClientService {
      */
     List<AgentPowerFunction> listFunctions();
 
-    /**
-     * @return function in client
-     */
-    AgentPowerFunction getFunction(String functionName);
-
 }

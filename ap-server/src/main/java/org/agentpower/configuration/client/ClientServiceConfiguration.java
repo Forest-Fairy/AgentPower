@@ -1,10 +1,13 @@
 package org.agentpower.configuration.client;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.Id;
 
 /**
  * 用户客户端服务配置
@@ -13,17 +16,18 @@ import org.springframework.data.annotation.Id;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
 public class ClientServiceConfiguration {
-    @Id
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String name;
     private String userId;
 
-    /* 代理服务url */
+    /* 客户端访问代理服务的url */
     private String serviceUrl;
     /* 客户端访问代理服务的请求头 */
     private String headers;
-    /* 代理服务公钥 加密后交给浏览器客户端 */
+    /* 代理服务公钥 用户id加密后交给浏览器客户端 */
     private String servicePublicKey;
 
     private String createdTime;

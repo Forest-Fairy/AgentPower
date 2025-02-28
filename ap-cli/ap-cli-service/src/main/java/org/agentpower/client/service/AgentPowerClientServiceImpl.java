@@ -24,6 +24,7 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
     public List<AgentPowerFunction> listFunctions() {
         Map<String, AgentPowerFunction> functionMap = this.applicationContext.getBeansOfType(AgentPowerFunction.class);
         return List.copyOf(functionMap.values());
+    }
 
 //        return functionMap
 //                .values()
@@ -37,11 +38,5 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
 //                .map(tuple -> (AgentPowerFunction) tuple.get(0))
 //                .map(func -> new Function(func.functionName(), func.functionDesc(), func.functionParamSchema()))
 //                .toList();
-    }
 
-    @Override
-    public AgentPowerFunction getFunction(String functionName) {
-        Map<String, AgentPowerFunction> functionMap = this.applicationContext.getBeansOfType(AgentPowerFunction.class);
-        return functionMap.get(functionName);
-    }
 }
