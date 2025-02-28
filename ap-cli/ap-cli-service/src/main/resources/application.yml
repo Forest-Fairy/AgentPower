@@ -1,4 +1,3 @@
-spring:
-  application:
-    name: agent-power-client-service
+agent-power:
+  port: 8848
 

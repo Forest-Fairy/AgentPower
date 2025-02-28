@@ -1,0 +1,6 @@
+server:
+  port: ${agent-power.port:8845}
+spring:
+  application:
+    name: agent-power-client-service
+    version: @project.version@
