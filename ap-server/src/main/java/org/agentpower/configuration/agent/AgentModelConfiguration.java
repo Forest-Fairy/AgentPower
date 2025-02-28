@@ -22,18 +22,20 @@ public class AgentModelConfiguration {
     private String id;
     private String name;
     private String userId;
+    /** 记录上下文数量 以对存在 */
+    private Integer chatMemoryCount;
 
-    /* 代理 平台: ollama, llm studio, etc. */
+    /** 代理 平台: ollama, llm studio, etc. */
     private String agentPlatform;
-    /* 代理 url */
+    /** 代理 url */
     private String agentBaseUrl;
-    /* 代理 认证头 */
+    /** 代理 认证头 */
     private String agentAuthorization;
-    /* 代理 自定义请求头，JSON格式 */
+    /** 代理 自定义请求头，JSON格式 */
     private String agentCustomHeaders;
-    /* 代理 模型 */
+    /** 代理 模型 */
     private String agentModel;
-    /* 代理 微调参数，JSON格式 */
+    /** 代理 微调参数，JSON格式 */
     private String agentCustomOptions;
 
     private String createdTime;

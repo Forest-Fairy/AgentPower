@@ -4,7 +4,10 @@ import com.alibaba.fastjson2.JSON;
 import lombok.AllArgsConstructor;
 import org.agentpower.agent.dto.ChatMediaResource;
 import org.agentpower.agent.dto.ChatMediaResourceProvider;
+import org.agentpower.agent.model.AgentSessionModel;
 import org.agentpower.agent.model.ChatMessageModel;
+import org.agentpower.agent.repo.AgentSessionRepo;
+import org.agentpower.agent.repo.ChatMessageRepo;
 import org.agentpower.configuration.platform.provider.PlatformProvider;
 import org.agentpower.api.AgentPowerFunction;
 import org.agentpower.api.FunctionRequest;
@@ -18,12 +21,17 @@ import org.agentpower.configuration.resource.provider.ResourceProvider;
 import org.agentpower.infrastracture.Globals;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.UserMessage;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
+import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.model.Media;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.MimeType;
 import reactor.core.publisher.Flux;
 import sun.misc.Unsafe;
@@ -36,8 +44,12 @@ import java.util.concurrent.*;
 
 @Service
 @AllArgsConstructor
-public class AgentChatService {
+public class AgentChatService implements ChatMemory {
     private final ConfigurationService configurationService;
+    private final VectorStore vectorStore;
+    private final ChatMessageRepo chatMessageRepo;
+    private final AgentSessionRepo agentSessionRepo;
+
     public Flux<ServerSentEvent<String>> chat(ChatMessageModel messageModel) {
         String requestId = messageModel.getRequestId();
         ClientServiceConfiguration clientServiceConfiguration = configurationService.getClientServiceConfiguration(messageModel.getClientAgentServiceConfigurationId());
@@ -45,26 +57,37 @@ public class AgentChatService {
         List<AgentPowerFunction> functions = getFunctions(requestId, clientServiceConfiguration);
         return ChatClient.create(PlatformProvider.GetModel(agentModelConfiguration))
                 .prompt()
-                // 启用文件问答
+                // 启用文件提示词
                 .system(systemSpec -> this.wrapSystemPrompt(systemSpec, messageModel))
                 .user(userSpec -> this.wrapUserPrompt(userSpec, messageModel))
-                // agent列表
+                // 工具列表
                 .tools(functions.stream().map(AgentPowerFunction::functionName).toList().toArray(new String[0]))
                 // 先尝试不传入toolContext
 //                .toolContext(Map.of("requestId", requestId))
                 .advisors(advisorSpec -> {
-                    // 使用历史消息
-                    useChatHistory(advisorSpec, aiMessageWrapper.getMessage().getSessionId());
-                    // 使用向量数据库
-                    useVectorStore(advisorSpec, aiMessageWrapper.getParams().getEnableVectorStore());
+                    // 历史记录
+                    advisorSpec.advisors(new MessageChatMemoryAdvisor(this, messageModel.getSessionId(),
+                            Optional.ofNullable(agentModelConfiguration.getChatMemoryCount()).map(i -> i*2).orElse(10)));
+                    // 向量检索增强
+                    Optional.of(messageModel.isEnableVectorStore()).filter(b -> b)
+                                    .ifPresent(b -> {
+                                        String promptWithContext = """
+                                            以下是可供参考的上下文信息
+                                            ---start---
+                                            {question_answer_context}
+                                            ---end---
+                                            """;
+                                            advisorSpec.advisors(new QuestionAnswerAdvisor(vectorStore,
+                                                    SearchRequest.builder().build(), promptWithContext));
+                                    });
                 })
                 .stream()
                 .chatResponse()
-                .map(chatResponse -> ServerSentEvent.builder(toJson(chatResponse))
+                .map(chatResponse -> ServerSentEvent.builder(JSON.toJSONString(chatResponse))
                         // 和前端监听的事件相对应
                         .event("message")
                         .build())
-                .doAfterTerminate();
+                .doAfterTerminate(() -> {});
     }
 
     private void wrapUserPrompt(ChatClient.PromptUserSpec promptUserSpec, ChatMessageModel messageModel) {
@@ -88,8 +111,7 @@ public class AgentChatService {
                 }
             } else {
                 ResourceProviderConfiguration resourceProviderConfiguration = configurationService.getResourceProviderConfiguration(provider.configId());
-                // noinspection rawtypes
-                ResourceProvider resourceProvider = ResourceProvider.getProvider(resourceProviderConfiguration.getType());
+                ResourceProvider<Resource> resourceProvider = ResourceProvider.getProvider(resourceProviderConfiguration.getType());
                 for (ChatMediaResource mediaResource : provider.mediaList()) {
                     mediaList.add(new Media(
                             MimeType.valueOf(mediaResource.mediaType()),
@@ -164,5 +186,20 @@ public class AgentChatService {
                 .map(f -> (AgentPowerFunction) f)
                 .filter(f -> f.functionName().equals(functionName))
                 .findFirst().orElse(null);
+    }
+
+    @Override
+    public void add(String conversationId, List<Message> messages) {
+
+    }
+
+    @Override
+    public List<Message> get(String conversationId, int lastN) {
+        return List.of();
+    }
+
+    @Override
+    public void clear(String conversationId) {
+
     }
 }
