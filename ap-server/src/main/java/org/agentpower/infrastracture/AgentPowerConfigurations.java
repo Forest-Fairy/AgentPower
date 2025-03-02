@@ -43,6 +43,7 @@ public class AgentPowerConfigurations {
         return new DelegatingToolCallbackResolver(List.of(staticToolCallbackResolver, springBeanToolCallbackResolver, agentPowerToolCallbackResolver));
     }
 
+    // TODO learn something about springdoc before using
     @Bean
     OpenAPI openAPI() {
         return new OpenAPI().info(new Info()
