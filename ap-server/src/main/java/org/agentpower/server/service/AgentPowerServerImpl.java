@@ -17,7 +17,7 @@ public class AgentPowerServerImpl implements AgentPowerServer {
     }
 
     @Override
-    public int sendFunctionList(String requestId, List<AgentPowerFunction> functions) {
-        return AgentChatService.receiveFunctionList(requestId, functions);
+    public int sendFunctionList(String requestId, String clientServiceId, List<? extends AgentPowerFunction> functions) {
+        return AgentChatService.receiveFunctionList(functions);
     }
 }

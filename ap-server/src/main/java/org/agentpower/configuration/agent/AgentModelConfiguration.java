@@ -22,8 +22,8 @@ public class AgentModelConfiguration {
     private String id;
     private String name;
     private String userId;
-    /** 记录上下文数量 以对存在 */
-    private Integer chatMemoryCount;
+    /** 历史聊天记录组数 以对存在 */
+    private Integer chatMemoryCouplesCount;
 
     /** 代理 平台: ollama, llm studio, etc. */
     private String agentPlatform;

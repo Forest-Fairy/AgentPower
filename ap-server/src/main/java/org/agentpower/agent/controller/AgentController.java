@@ -3,12 +3,13 @@ package org.agentpower.agent.controller;
 import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson2.JSON;
 import lombok.AllArgsConstructor;
-import org.agentpower.agent.dto.ChatMessageObject;
-import org.agentpower.agent.dto.ChatMediaResourceProvider;
+import org.agentpower.api.message.ChatMessageObject;
 import org.agentpower.agent.model.ChatMessageModel;
 import org.agentpower.configuration.platform.provider.PlatformProvider;
 import org.agentpower.agent.service.AgentChatService;
+import org.agentpower.configuration.resource.provider.ResourceProvider;
 import org.agentpower.infrastracture.Globals;
+import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.MediaType;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -36,6 +38,18 @@ public class AgentController {
     }
 
     /**
+     * @return 支持的资源类型
+     */
+    @GetMapping("resource/providers")
+    public List<Map<String, String>> resourceProviders() {
+        return ResourceProvider.providers()
+                .stream().map(p -> Map.of(
+                        "type", p.type(),
+                        "desc", p.desc()
+                )).toList();
+    }
+
+    /**
      * 文本聊天接口
      * @param messageObject 聊天消息
      * @param file 系统知识文件
@@ -46,17 +60,16 @@ public class AgentController {
                                               @RequestPart(required = false) MultipartFile file) throws IOException {
         String loginUserId = Globals.User.getLoginUser().getId();
         String systemKnowledge = getKnowledgeFromFile(file);
-        List<ChatMediaResourceProvider> providers = messageObject.setting().resourceProviders() == null ?
-                List.of() : messageObject.setting().resourceProviders();
         return Optional.of(ChatMessageModel.builder())
                 .map(builder -> builder.requestId(Globals.RequestContext.getRequestId())
+                        .messageType(MessageType.USER.getValue())
                         .sessionId(messageObject.sessionId())
                         .textContent(messageObject.textContent())
                         .systemKnowledge(systemKnowledge)
-                        .enableVectorStore(messageObject.setting().enableVectorStore())
                         .agentModelConfigurationId(messageObject.setting().clientAgentModelId())
                         .clientAgentServiceConfigurationId(messageObject.setting().clientAgentServiceId())
-                        .resourceProviders(JSON.toJSONString(providers))
+                        .knowledgeBaseId(messageObject.setting().knowledgeBaseId())
+                        .resourceProviders(JSON.toJSONString(messageObject.setting().resourceProviders()))
                         .userId(loginUserId)
                         .createdBy(loginUserId)
                         .createdTime(DateUtil.now())

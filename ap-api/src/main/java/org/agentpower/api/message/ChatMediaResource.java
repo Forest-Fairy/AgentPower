@@ -1,4 +1,4 @@
-package org.agentpower.agent.dto;
+package org.agentpower.api.message;
 
 /**
  * 多媒体资源

@@ -14,16 +14,16 @@ import java.util.*;
 public class AgentPowerClientServiceImpl implements AgentPowerClientService {
     private final ApplicationContext applicationContext;
     @Override
-    public String call(FunctionRequest functionRequest) {
+    public FunctionRequest.CallResult call(String functionName, Map<String, Object> params) {
         // TODO get function bean and handle with
         // see how spring ai calling the function bean
-        return "";
+        return new FunctionRequest.CallResult("", "");
     }
 
     @Override
-    public List<AgentPowerFunction> listFunctions() {
+    public List<? extends AgentPowerFunction> listFunctions() {
         Map<String, AgentPowerFunction> functionMap = this.applicationContext.getBeansOfType(AgentPowerFunction.class);
-        return List.copyOf(functionMap.values());
+        return functionMap.values().stream().map(AgentPowerFunction.Function::build).toList();
     }
 
 //        return functionMap

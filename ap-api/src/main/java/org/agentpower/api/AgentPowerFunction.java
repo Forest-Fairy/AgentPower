@@ -16,4 +16,10 @@ public interface AgentPowerFunction {
      */
     String functionParamSchema();
 
+    record Function(String functionName, String functionDesc, String functionParamSchema) implements AgentPowerFunction {
+        public static Function build(AgentPowerFunction function) {
+            return new Function(function.functionName(), function.functionDesc(), function.functionParamSchema());
+        }
+    }
+
 }

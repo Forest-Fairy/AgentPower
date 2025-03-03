@@ -3,6 +3,7 @@ package org.agentpower.configuration.resource.provider;
 import org.agentpower.configuration.resource.ResourceProviderConfiguration;
 import org.springframework.core.io.Resource;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +17,14 @@ public abstract class ResourceProvider<T extends Resource> {
         }
     }
     public abstract String type();
+
+    public abstract String desc();
+
     public abstract T getSource(ResourceProviderConfiguration resourceProviderConfiguration, String configId);
+
+    public static Collection<ResourceProvider<?>> providers() {
+        return providers.values();
+    }
 
     public static <T extends Resource> ResourceProvider<T> getProvider(String type) {
         return (ResourceProvider<T>) providers.get(type);

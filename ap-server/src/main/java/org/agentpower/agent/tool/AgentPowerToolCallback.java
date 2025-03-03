@@ -2,35 +2,42 @@ package org.agentpower.agent.tool;
 
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Nonnull;
+import org.agentpower.agent.AgentChatHelper;
 import org.agentpower.api.AgentPowerFunction;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.StatusCode;
+import org.agentpower.api.message.ChatMessageObject;
 import org.agentpower.common.RSAUtil;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.infrastracture.Globals;
-import org.springframework.ai.chat.model.ToolContext;
 import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.definition.DefaultToolDefinition;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.http.codec.ServerSentEvent;
 import sun.misc.Unsafe;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.*;
 
 public class AgentPowerToolCallback implements ToolCallback {
 
+    private final AgentPowerToolCallbackResolver resolver;
     private final String requestId;
     private final String loginUserId;
     private final ToolDefinition toolDefinition;
     private final ClientServiceConfiguration clientServiceConfiguration;
 
-    public AgentPowerToolCallback(ClientServiceConfiguration clientServiceConfiguration, String functionName) {
+    public AgentPowerToolCallback(AgentPowerToolCallbackResolver resolver, ClientServiceConfiguration clientServiceConfiguration, String functionName) {
+        this.resolver = resolver;
         this.requestId = Globals.RequestContext.getRequestId();
         this.loginUserId = Globals.User.getLoginUser().getId();
         this.clientServiceConfiguration = clientServiceConfiguration;
-        this.toolDefinition = getToolDefinitionInterval(functionName);
+        // TODO 如果requestId 是空 导致获取不到函数定义 那就只能重新发一条消息给客户端以拉取客户端的函数信息
+        AgentPowerFunction agentPowerFunction = AgentChatHelper.Runtime.getFunctionDefinition(requestId, clientServiceConfiguration.getId(), functionName);
+        this.toolDefinition = ToolDefinition.builder()
+                .name(agentPowerFunction.functionName())
+                .description(agentPowerFunction.functionDesc())
+                .inputSchema(agentPowerFunction.functionParamSchema())
+                .build();
     }
 
     @Override
@@ -40,10 +47,23 @@ public class AgentPowerToolCallback implements ToolCallback {
 
     @Override
     public String call(String toolInput) {
-        return callClientFunction(toolInput);
+        FunctionRequest.CallResult callResult = JSON.parseObject(callClientFunction(toolInput), FunctionRequest.CallResult.class);
+        if (callResult.type().equals(FunctionRequest.CallResult.Type.ERROR)) {
+            throw new RuntimeException(toolDefinition.name() + " 执行出错：" + callResult.content());
+        }
+        if (callResult.type().equals(FunctionRequest.CallResult.Type.DIRECT)) {
+            return callResult.content();
+        }
+        if (callResult.type().equals(FunctionRequest.CallResult.Type.AGENT)) {
+            // 继续调用大模型
+            return resolver.callPrompt(requestId, loginUserId, clientServiceConfiguration,
+                    JSON.parseObject(callResult.content(), ChatMessageObject.class));
+        }
+        throw new IllegalArgumentException(toolDefinition.name() + " 响应了未知结果类型：" + callResult.type() + " 结果内容为：" + callResult.content());
     }
 
     private static final Map<String, Object> CALL_RESULT_CACHE =  new ConcurrentHashMap<>();
+
     private String callClientFunction(String toolInput) {
         Globals.Client.sendMessage(requestId, buildEvent(
                 requestId, loginUserId, FunctionRequest.Event.FUNC_CALL,
@@ -68,41 +88,6 @@ public class AgentPowerToolCallback implements ToolCallback {
             return Integer.parseInt(CALL_RESULT_CACHE.get(functionDefinitionKey).toString());
         } else {
             CALL_RESULT_CACHE.put(functionDefinitionKey, callResult);
-            return StatusCode.OK;
-        }
-    }
-
-    private static final Map<String, Object> DEFINITION_CACHE =  new ConcurrentHashMap<>();
-    private ToolDefinition getToolDefinitionInterval(String functionName) {
-        Globals.Client.sendMessage(requestId, buildEvent(
-                requestId, loginUserId, FunctionRequest.Event.GET_FUNCTION,
-                functionName, clientServiceConfiguration, null));
-        // TODO 接收客户端服务回调的结果
-        String functionDefinitionKey = wrapFunctionDefinitionKey(requestId, functionName);
-        try {
-            return CompletableFuture.supplyAsync(() -> {
-                while (!DEFINITION_CACHE.containsKey(functionDefinitionKey)) {
-                    Unsafe.getUnsafe().park(true, TimeUnit.MILLISECONDS.toNanos(500));
-                }
-                return (ToolDefinition) DEFINITION_CACHE.remove(functionDefinitionKey);
-            }).get(30, TimeUnit.SECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            DEFINITION_CACHE.put(functionDefinitionKey, StatusCode.REQUEST_ABORT);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static int receiveFunctionInfo(String requestId, AgentPowerFunction agentPowerFunction) {
-        String functionDefinitionKey = wrapFunctionDefinitionKey(requestId, agentPowerFunction.functionName());
-        ToolDefinition definition = DefaultToolDefinition.builder()
-                .name(agentPowerFunction.functionName())
-                .description(agentPowerFunction.functionDesc())
-                .inputSchema(agentPowerFunction.functionParamSchema())
-                .build();
-        if (DEFINITION_CACHE.containsKey(functionDefinitionKey)) {
-            return Integer.parseInt(DEFINITION_CACHE.get(functionDefinitionKey).toString());
-        } else {
-            DEFINITION_CACHE.put(functionDefinitionKey, definition);
             return StatusCode.OK;
         }
     }

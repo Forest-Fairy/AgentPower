@@ -19,30 +19,14 @@ public class AgentPowerClientController {
     private final AgentPowerClientServiceImpl clientService;
 
     @PostMapping("call")
-    public String call(String requestId, String functionName, Map<String, Object> params) {
-        return clientService.call(new FunctionRequest(
-                requestId, functionName, FunctionRequest.Event.FUNC_CALL, params));
+    public FunctionRequest.CallResult call(String functionName, Map<String, Object> params) {
+        return clientService.call(functionName, params);
     }
 
     @GetMapping("listFunctions")
-    public List<Map<String, String>> listFunctions() {
-        return clientService.listFunctions().stream().map(this::functionToMap).toList();
+    public List<? extends AgentPowerFunction> listFunctions() {
+        return clientService.listFunctions();
     }
 
-    @GetMapping("getFunction")
-    public Map<String, String> getFunction(String functionName) {
-        return functionToMap(clientService.getFunction(functionName));
-    }
-
-    private Map<String, String> functionToMap(AgentPowerFunction function) {
-        if (function == null) {
-            return null;
-        }
-        return Map.of(
-                "functionName", function.functionName(),
-                "functionDesc", function.functionDesc(),
-                "functionParamSchema", function.functionParamSchema()
-        );
-    }
 
 }

@@ -1,17 +1,17 @@
 package org.agentpower.api;
 
 import java.util.List;
+import java.util.Map;
 
 public interface AgentPowerClientService {
     /**
-     * @param functionRequest request
      * @return tool-call result
      */
-    String call(FunctionRequest functionRequest);
+    FunctionRequest.CallResult call(String functionName, Map<String, Object> params);
 
     /**
      * @return all functions in client
      */
-    List<AgentPowerFunction> listFunctions();
+    List<? extends AgentPowerFunction> listFunctions();
 
 }

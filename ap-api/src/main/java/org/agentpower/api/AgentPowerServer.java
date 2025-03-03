@@ -6,6 +6,6 @@ public interface AgentPowerServer {
 
     int sendCallResult(String requestId, String functionName, String callResult);
 
-    int sendFunctionList(String requestId, List<AgentPowerFunction> functions);
+    int sendFunctionList(String requestId, String clientServiceId, List<? extends AgentPowerFunction> functions);
 
 }

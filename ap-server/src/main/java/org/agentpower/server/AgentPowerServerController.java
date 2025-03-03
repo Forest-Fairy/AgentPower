@@ -20,36 +20,16 @@ public class AgentPowerServerController {
     public int sendCallResult(
             @RequestParam String requestId,
             @RequestParam String functionName,
-            @RequestParam CallResult callResult) throws IOException {
+            @RequestParam CallResultParams params) throws IOException {
         return agentPowerServerService.sendCallResult(
-                requestId, functionName, callResult.callResult);
+                requestId, functionName, params.callResult);
     }
-    public record CallResult(@RequestParam String callResult) {}
-
-
-    @RequestMapping("sendFunction")
-    public int sendFunction(@RequestParam String requestId,
-                            @RequestParam Function function) throws IOException {
-        return agentPowerServerService.sendFunction(requestId,
-                AgentFunctionDto.builder()
-                        .functionName(function.functionName())
-                        .functionDesc(function.functionDesc)
-                        .functionParamSchema(function.functionParamSchema)
-                        .build());
-    }
+    public record CallResultParams(@RequestParam String callResult) {}
 
     @RequestMapping("sendFunctionList")
-    public int sendFunctionList(@RequestParam String requestId, @RequestParam Functions functions) throws IOException {
-        return agentPowerServerService.sendFunctionList(requestId,
-                functions.functions.stream()
-                        .map(function -> (AgentPowerFunction) AgentFunctionDto.builder()
-                                .functionName(function.functionName)
-                                .functionDesc(function.functionDesc)
-                                .functionParamSchema(function.functionParamSchema)
-                                .build()).toList());
+    public int sendFunctionList(@RequestParam String requestId, @RequestParam FunctionsParams params) throws IOException {
+        return agentPowerServerService.sendFunctionList(requestId, params.clientServiceId, params.functions);
     }
-
-    public record Functions(@RequestParam List<Function> functions) {}
-    public record Function(@RequestParam String functionName, @RequestParam String functionDesc, @RequestParam String functionParamSchema) {}
+    public record FunctionsParams(@RequestParam String clientServiceId, @RequestParam List<AgentPowerFunction.Function> functions) {}
 
 }

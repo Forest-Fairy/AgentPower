@@ -1,19 +1,13 @@
 package org.agentpower.agent.model;
 
 
-import com.alibaba.fastjson2.JSON;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.*;
-import org.agentpower.agent.dto.ChatMediaResourceProvider;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.model.Media;
-import org.springframework.util.CollectionUtils;
 
-import java.util.List;
+import org.springframework.ai.chat.messages.MessageType;
 
 /**
  * 会话ID
@@ -28,6 +22,8 @@ public class ChatMessageModel {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
     private String userId;
+    /** 消息类型 {@link MessageType} */
+    private String messageType;
 
     // content
     /** 会话id */
@@ -36,17 +32,19 @@ public class ChatMessageModel {
     private String requestId;
     /** 系统预先知识 */
     private String systemKnowledge;
+//    /** 引用记忆组数 */ 暂时不用
+//    private int chatMemoryCouplesCount;
 
     /** 问题内容 */
     private String textContent;
 
     // settings
-    /** 是否启用向量库 */
-    private boolean enableVectorStore;
     /** 客户端代理模型配置id */
     private String agentModelConfigurationId;
     /** 客户端代理增强服务配置id */
     private String clientAgentServiceConfigurationId;
+    /** 知识库id */
+    private String knowledgeBaseId;
     /** 资源提供者列表 */
     private String resourceProviders;
 
