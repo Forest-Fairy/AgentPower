@@ -7,15 +7,17 @@ import java.util.stream.Collectors;
 
 /**
  *
- * @param clientAgentModelId    客户端代理模型配置id -> 不可为空
- * @param clientAgentServiceId  客户端代理增强配置id -> 空表示无启用
- * @param knowledgeBaseId       知识库id           -> 空表示不启用向量检索
- * @param resourceProviders     资源提供者列表
+ * @param clientAgentModelId     客户端代理模型配置id -> 不可为空
+ * @param clientAgentServiceId   客户端代理增强配置id -> 空表示无启用
+ * @param knowledgeBaseId        知识库id           -> 空表示不启用向量检索
+ * @param chatMemoryCouplesCount 聊天记录组数        -> 空则在第一次使用模型设置，之后的为0
+ * @param resourceProviders      资源提供者列表
  */
 public record ChatMessageSetting(
         String clientAgentModelId,
         String clientAgentServiceId,
         String knowledgeBaseId,
+        int chatMemoryCouplesCount,
         List<ChatMediaResourceProvider> resourceProviders) {
     public static Builder builder() {
         return new Builder();
@@ -25,6 +27,7 @@ public record ChatMessageSetting(
         private String clientAgentModelId;
         private String clientAgentServiceId;
         private String knowledgeBaseId;
+        private int chatMemoryCouplesCount;
         private List<ChatMediaResourceProvider> resourceProviders;
 
         public Builder() {
@@ -49,6 +52,10 @@ public record ChatMessageSetting(
             this.knowledgeBaseId = knowledgeBaseId;
             return this;
         }
+        public Builder chatMemoryCouplesCount(Integer chatMemoryCouplesCount) {
+            this.chatMemoryCouplesCount = chatMemoryCouplesCount;
+            return this;
+        }
         public Builder addResourceProvider(ChatMediaResourceProvider... resourceProviders) {
             this.resourceProviders.addAll(List.of(resourceProviders));
             return this;
@@ -70,7 +77,7 @@ public record ChatMessageSetting(
                     new ChatMediaResourceProvider(entry.getKey(),
                             entry.getValue().stream().map(ChatMediaResourceProvider::mediaList).flatMap(List::stream).toList())
             ).toList();
-            return new ChatMessageSetting(enableVectorStore, clientAgentModelId, clientAgentServiceId, knowledgeBaseId, providers);
+            return new ChatMessageSetting(clientAgentModelId, clientAgentServiceId, knowledgeBaseId, chatMemoryCouplesCount, providers);
         }
     }
 }

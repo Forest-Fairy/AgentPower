@@ -1,6 +1,5 @@
 package org.agentpower.agent.service;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.alibaba.fastjson2.JSON;
 import lombok.AllArgsConstructor;
 import org.agentpower.agent.AgentChatHelper;
@@ -10,34 +9,22 @@ import org.agentpower.agent.repo.AgentSessionRepo;
 import org.agentpower.agent.repo.ChatMessageRepo;
 import org.agentpower.api.AgentPowerFunction;
 import org.agentpower.api.FunctionRequest;
-import org.agentpower.api.StatusCode;
-import org.agentpower.common.RSAUtil;
 import org.agentpower.configuration.ConfigurationService;
 import org.agentpower.configuration.agent.AgentModelConfiguration;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
-import org.agentpower.infrastracture.Globals;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.messages.*;
-import org.springframework.ai.model.Media;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import sun.misc.Unsafe;
 
-import java.net.URL;
 import java.util.*;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -57,28 +44,31 @@ public class AgentChatService {
         if (hasClientService) {
             ClientServiceConfiguration clientServiceConfiguration = configurationService
                     .getClientServiceConfiguration(messageModel.getClientAgentServiceConfigurationId());
-            functions = AgentChatHelper.Prompt.getFunctions(requestId, messageModel.getCreatedBy(), clientServiceConfiguration).stream()
-                    .collect(Collectors.toMap(AgentPowerFunction::functionName, toolDefinition -> toolDefinition, (o1, o2)->o2));
+            functions = AgentChatHelper.Prompt.getFunctions(requestId, messageModel.getCreatedBy(), clientServiceConfiguration);
             AgentChatHelper.Registry.startConversation(requestId, messageModel, chatModel, clientServiceConfiguration, functions);
         } else {
             functions = Map.of();
         }
-        int chatMemoryCouplesCount = Optional.ofNullable(agentModelConfiguration.getChatMemoryCouplesCount()).orElse(5);
+        int chatMemoryCouplesCount = messageModel.getChatMemoryCouplesCount() != 0 ? messageModel.getChatMemoryCouplesCount() :
+                Optional.ofNullable(agentModelConfiguration.getChatMemoryCouplesCount()).orElse(5);
         return prompt(chatModel, messageModel, functions.keySet(), chatMemoryCouplesCount)
+                .map(chatResponse -> ServerSentEvent.builder(JSON.toJSONString(chatResponse))
+                        .event(FunctionRequest.Event.AGENT_CALL)
+                        .build())
                 .doAfterTerminate(() -> AgentChatHelper.Registry.endConversation(requestId));
     }
 
-    public Flux<ServerSentEvent<String>> prompt(AgentPowerChatModelDelegate chatModel,
-                                                ChatMessageModel messageModel,
-                                                Collection<String> functionNames,
-                                                int chatMemoryCouplesCount) {
+    public Flux<ChatResponse> prompt(AgentPowerChatModelDelegate chatModel,
+                                     ChatMessageModel messageModel,
+                                     Collection<String> functionNames,
+                                     int chatMemoryCouplesCount) {
         return ChatClient.create(chatModel)
                 .prompt()
                 // 启用文件提示词
                 .system(systemSpec -> AgentChatHelper.Prompt.wrapSystemPrompt(systemSpec, messageModel))
                 .user(userSpec -> AgentChatHelper.Prompt.wrapUserPrompt(userSpec, messageModel, configurationService))
                 // 工具列表
-                .tools(functionNames.stream().map(n -> AgentChatHelper.Function.wrapFunctionName(
+                .tools(functionNames.stream().map(n -> AgentChatHelper.FunctionInfo.wrapFunctionName(
                         messageModel.getRequestId(), messageModel.getClientAgentServiceConfigurationId(), n)))
                 // 先尝试不传入toolContext
 //                .toolContext(Map.of("requestId", requestId))
@@ -106,10 +96,7 @@ public class AgentChatService {
                             });
                 })
                 .stream()
-                .chatResponse()
-                .map(chatResponse -> ServerSentEvent.builder(JSON.toJSONString(chatResponse))
-                        .event(FunctionRequest.Event.AGENT_CALL)
-                        .build());
+                .chatResponse();
     }
 
 }

@@ -69,6 +69,7 @@ public class AgentController {
                         .agentModelConfigurationId(messageObject.setting().clientAgentModelId())
                         .clientAgentServiceConfigurationId(messageObject.setting().clientAgentServiceId())
                         .knowledgeBaseId(messageObject.setting().knowledgeBaseId())
+                        .chatMemoryCouplesCount(messageObject.setting().chatMemoryCouplesCount())
                         .resourceProviders(JSON.toJSONString(messageObject.setting().resourceProviders()))
                         .userId(loginUserId)
                         .createdBy(loginUserId)

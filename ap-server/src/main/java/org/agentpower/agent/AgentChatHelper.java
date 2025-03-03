@@ -1,7 +1,6 @@
 package org.agentpower.agent;
 
 import com.alibaba.fastjson2.JSON;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.agentpower.agent.tool.AgentPowerChatModelDelegate;
 import org.agentpower.agent.model.ChatMessageModel;
@@ -24,11 +23,11 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.util.MimeType;
-import reactor.util.function.Tuple2;
 import sun.misc.Unsafe;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class AgentChatHelper {
     private AgentChatHelper() {}
@@ -108,10 +107,18 @@ public class AgentChatHelper {
 
 
         private static final Map<String, Object> FUNCTIONS_CACHE = new ConcurrentHashMap<>();
-        public static List<AgentPowerFunction> getFunctions(String requestId, String userId, ClientServiceConfiguration clientServiceConfiguration) {
+        public static Map<String, AgentPowerFunction> getFunctions(String requestId, String userId, ClientServiceConfiguration clientServiceConfiguration) {
             if (clientServiceConfiguration == null) {
                 // 未启用智能体
-                return List.of();
+                return Map.of();
+            }
+            Map<String, AgentPowerFunction> functionMap = Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
+                    .map(runtime -> runtime.getClients().get(clientServiceConfiguration.getId()))
+                    .map(Tuples._2::t1)
+                    .orElse(null);
+            if (functionMap != null) {
+                // 从缓存获取到了 如果是空集合 表示客户端没有智能体函数
+                return functionMap;
             }
             Globals.Client.sendMessage(requestId, ServerSentEvent.builder()
                     .event(FunctionRequest.Event.LIST_FUNCTIONS)
@@ -130,20 +137,21 @@ public class AgentChatHelper {
                     .build());
             String functionDefinitionKey = requestId;
             try {
-                return CompletableFuture.supplyAsync(() -> {
+                List<AgentPowerFunction> functions = CompletableFuture.supplyAsync(() -> {
                     Object f;
                     while ((f = FUNCTIONS_CACHE.remove(functionDefinitionKey)) == null) {
                         Unsafe.getUnsafe().park(true, TimeUnit.MILLISECONDS.toNanos(500));
                     }
                     return (List<AgentPowerFunction>) f;
                 }).get(30, TimeUnit.SECONDS);
+                return functions.stream().collect(Collectors.toMap(AgentPowerFunction::functionName, func -> func, (o1, o2) -> o2));
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 FUNCTIONS_CACHE.put(functionDefinitionKey, StatusCode.REQUEST_ABORT);
                 throw new RuntimeException(e);
             }
         }
-        public static int receiveFunctionList(List<? extends AgentPowerFunction> functions) {
-            String functionDefinitionKey = Globals.RequestContext.getRequestId();
+        public static int receiveFunctionList(String requestId, List<? extends AgentPowerFunction> functions) {
+            String functionDefinitionKey = requestId;
             Object old = FUNCTIONS_CACHE.put(functionDefinitionKey, functions);
             if (old instanceof Integer abort) {
                 FUNCTIONS_CACHE.remove(functionDefinitionKey);
@@ -156,13 +164,6 @@ public class AgentChatHelper {
 
     public static class Runtime {
         private Runtime() {}
-        public static Collection<String> getFunctionNames(String requestId, String clientServiceId) {
-            return Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
-                    .map(ChatRuntime::getClients)
-                    .map(cs -> cs.get(clientServiceId).t1())
-                    .map(Map::keySet)
-                    .orElse(Set.of());
-        }
         public static AgentPowerFunction getFunctionDefinition(String requestId, String clientServiceId, String functionName) {
             return Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
                     .map(ChatRuntime::getClients)
@@ -184,8 +185,8 @@ public class AgentChatHelper {
         }
     }
 
-    public static class Function {
-        private Function() {}
+    public static class FunctionInfo {
+        private FunctionInfo() {}
         public static class FunctionNameInfo {
             public final String requestId;
             public final String clientServiceId;
@@ -210,8 +211,6 @@ public class AgentChatHelper {
             }
             return new FunctionNameInfo(parts[1], parts[2], parts[3]);
         }
-
-
 
     }
 

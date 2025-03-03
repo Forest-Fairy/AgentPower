@@ -25,7 +25,7 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
 
     @Override
     public FunctionCallback resolve(String toolName) {
-        AgentChatHelper.Function.FunctionNameInfo functionNameInfo = AgentChatHelper.Function.unwrapFunctionName(toolName);
+        AgentChatHelper.FunctionInfo.FunctionNameInfo functionNameInfo = AgentChatHelper.FunctionInfo.unwrapFunctionName(toolName);
         if (functionNameInfo == null) {
             return null;
         }
@@ -44,12 +44,18 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
                              ChatMessageObject newMessageObject) {
         AgentPowerChatModelDelegate chatModelDelegate = AgentChatHelper.Runtime.getChatModelDelegate(requestId);
         String chatModelId = newMessageObject.setting().clientAgentModelId();
-        AgentPowerChatModelDelegate chatModel;
+        AgentPowerChatModelDelegate chatModelToUse;
         if (chatModelId != null && !chatModelId.equals(chatModelDelegate.getAgentModelConfiguration().getId())) {
             // 通过新模型调用
-            chatModel = new AgentPowerChatModelDelegate(requestId, configurationService.getAgentModelConfiguration(chatModelId));
+            chatModelToUse = new AgentPowerChatModelDelegate(requestId, configurationService.getAgentModelConfiguration(chatModelId));
         } else {
-            chatModel = chatModelDelegate;
+            chatModelToUse = chatModelDelegate;
+        }
+        ClientServiceConfiguration clientServiceToUse;
+        if (newMessageObject.setting().clientAgentServiceId() != null && ! clientServiceConfiguration.getId().equals(newMessageObject.setting().clientAgentServiceId())) {
+            clientServiceToUse = configurationService.getClientServiceConfiguration(newMessageObject.setting().clientAgentServiceId());
+        } else {
+            clientServiceToUse = clientServiceConfiguration;
         }
         return Optional.of(ChatMessageModel.builder())
                 .map(builder -> builder
@@ -64,8 +70,10 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
                         .createdBy(loginUserId)
                         .createdTime(DateUtil.now())
                         .build())
-                .map(messageModel -> chatService.prompt(chatModel, messageModel,))
-                                .orElse("");
+                .map(messageModel -> chatService.prompt(chatModelToUse, messageModel,
+                        AgentChatHelper.Prompt.getFunctions(requestId, loginUserId, clientServiceToUse).keySet(),
+                        messageModel.getChatMemoryCouplesCount()))
+                .;
     }
 
     public static class Builder {

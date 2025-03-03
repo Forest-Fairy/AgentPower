@@ -1,6 +1,7 @@
 package org.agentpower.server.service;
 
 
+import org.agentpower.agent.AgentChatHelper;
 import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.agent.tool.AgentPowerToolCallback;
 import org.agentpower.api.AgentPowerFunction;
@@ -18,6 +19,6 @@ public class AgentPowerServerImpl implements AgentPowerServer {
 
     @Override
     public int sendFunctionList(String requestId, String clientServiceId, List<? extends AgentPowerFunction> functions) {
-        return AgentChatService.receiveFunctionList(functions);
+        return AgentChatHelper.Prompt.receiveFunctionList(requestId, functions);
     }
 }

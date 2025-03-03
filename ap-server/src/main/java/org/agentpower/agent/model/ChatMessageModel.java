@@ -32,8 +32,8 @@ public class ChatMessageModel {
     private String requestId;
     /** 系统预先知识 */
     private String systemKnowledge;
-//    /** 引用记忆组数 */ 暂时不用
-//    private int chatMemoryCouplesCount;
+    /** 引用记忆组数 */
+    private int chatMemoryCouplesCount;
 
     /** 问题内容 */
     private String textContent;
