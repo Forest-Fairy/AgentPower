@@ -76,7 +76,7 @@ public class AgentChatService {
                     // 历史记录
                     advisorSpec.advisors(new MessageChatMemoryAdvisor(chatMemory, messageModel.getSessionId(), chatMemoryCouplesCount * 2));
                     // 向量检索增强
-                    Optional.of(messageModel.getKnowledgeBaseId()).filter(StringUtils::isNotBlank)
+                    Optional.ofNullable(messageModel.getKnowledgeBaseId()).filter(StringUtils::isNotBlank)
                             .ifPresent(knowledgeBaseId -> {
                                 String promptWithContext = """
                                         以下可能有可供参考的信息

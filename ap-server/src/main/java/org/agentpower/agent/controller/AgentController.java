@@ -5,7 +5,7 @@ import com.alibaba.fastjson2.JSON;
 import lombok.AllArgsConstructor;
 import org.agentpower.api.message.ChatMessageObject;
 import org.agentpower.agent.model.ChatMessageModel;
-import org.agentpower.configuration.platform.provider.PlatformProvider;
+import org.agentpower.configuration.agent.provider.AgentModelProvider;
 import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.configuration.resource.provider.ResourceProvider;
 import org.agentpower.infrastracture.Globals;
@@ -34,7 +34,7 @@ public class AgentController {
      */
     @GetMapping("platforms")
     public List<String> platforms() {
-        return PlatformProvider.getPlatforms();
+        return AgentModelProvider.getPlatforms();
     }
 
     /**

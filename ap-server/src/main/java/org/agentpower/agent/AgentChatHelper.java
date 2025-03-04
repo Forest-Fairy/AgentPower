@@ -12,6 +12,7 @@ import org.agentpower.api.message.ChatMediaResourceProvider;
 import org.agentpower.common.RSAUtil;
 import org.agentpower.common.Tuples;
 import org.agentpower.configuration.ConfigurationService;
+import org.agentpower.configuration.agent.AgentModelConfiguration;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.configuration.resource.ResourceProviderConfiguration;
 import org.agentpower.configuration.resource.provider.ResourceProvider;
@@ -20,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.model.Media;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.Resource;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.util.MimeType;
 import sun.misc.Unsafe;
@@ -40,7 +40,7 @@ public class AgentChatHelper {
                                              ClientServiceConfiguration clientServiceConfiguration, Map<String, AgentPowerFunction> functions) {
             // TODO 校验空
             ChatRuntime runtime = new ChatRuntime(messageModel, chatModel);
-            runtime.setClientFunctions(clientServiceConfiguration, functions);
+            runtime.cacheClientFunctions(clientServiceConfiguration, functions);
             CHAT_RUNTIME_CACHE.put(requestId, runtime);
         }
 
@@ -49,7 +49,7 @@ public class AgentChatHelper {
             if (runtime == null) {
                 throw new IllegalStateException("会话已终止");
             }
-            runtime.setClientFunctions(clientServiceConfiguration, functions);
+            runtime.cacheClientFunctions(clientServiceConfiguration, functions);
         }
 
         public static void endConversation(String requestId) {
@@ -78,10 +78,16 @@ public class AgentChatHelper {
             if (textContent != null) {
                 promptUserSpec.text(textContent);
             }
+            List<Media> mediaList = extractMedia(messageModel, configurationService);
+            if (mediaList == null) return;
+            promptUserSpec.media(mediaList.toArray(new Media[0]));
+        }
+
+        public static List<Media> extractMedia(ChatMessageModel messageModel, ConfigurationService configurationService) {
             List<ChatMediaResourceProvider> providers = JSON.parseArray(
                     messageModel.getResourceProviders(), ChatMediaResourceProvider.class);
             if (providers == null || providers.isEmpty()) {
-                return;
+                return List.of();
             }
             List<Media> mediaList = new LinkedList<>();
             for (ChatMediaResourceProvider provider : providers) {
@@ -94,15 +100,13 @@ public class AgentChatHelper {
                     }
                 } else {
                     ResourceProviderConfiguration resourceProviderConfiguration = configurationService.getResourceProviderConfiguration(provider.configId());
-                    ResourceProvider<Resource> resourceProvider = ResourceProvider.getProvider(resourceProviderConfiguration.getType());
+                    ResourceProvider resourceProvider = ResourceProvider.getProvider(resourceProviderConfiguration.getType());
                     for (ChatMediaResource mediaResource : provider.mediaList()) {
-                        mediaList.add(new Media(
-                                MimeType.valueOf(mediaResource.mediaType()),
-                                resourceProvider.getSource(resourceProviderConfiguration, mediaResource.id())));
+                        mediaList.add(resourceProvider.getSource(resourceProviderConfiguration, mediaResource.id()));
                     }
                 }
             }
-            promptUserSpec.media(mediaList.toArray(new Media[0]));
+            return mediaList;
         }
 
 
@@ -183,6 +187,13 @@ public class AgentChatHelper {
                     .map(ChatRuntime::getChatModel)
                     .orElse(null);
         }
+        public static AgentPowerChatModelDelegate getChatModelDelegate(String requestId, String modelConfigId) {
+            return Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
+                    .map(ChatRuntime::getModels)
+                    .map(models -> models.get(modelConfigId))
+                    .map(Tuples._2::t1)
+                    .orElse(null);
+        }
     }
 
     public static class FunctionInfo {
@@ -219,16 +230,22 @@ public class AgentChatHelper {
     private static class ChatRuntime {
         ChatMessageModel messageModel;
         AgentPowerChatModelDelegate chatModel;
+        Map<String, Tuples._2<AgentModelConfiguration, AgentPowerChatModelDelegate>> models;
         Map<String, Tuples._2<ClientServiceConfiguration, Map<String, AgentPowerFunction>>> clients;
 
         public ChatRuntime(ChatMessageModel messageModel, AgentPowerChatModelDelegate chatModel) {
             this.messageModel = messageModel;
             this.chatModel = chatModel;
+            this.models = new ConcurrentHashMap<>();
             this.clients = new ConcurrentHashMap<>();
         }
 
-        void setClientFunctions(ClientServiceConfiguration configuration, Map<String, AgentPowerFunction> functions) {
+        void cacheClientFunctions(ClientServiceConfiguration configuration, Map<String, AgentPowerFunction> functions) {
             this.clients.put(configuration.getId(), new Tuples._2<>(configuration, functions));
+        }
+
+        void cacheModel(AgentModelConfiguration configuration, AgentPowerChatModelDelegate model) {
+            this.models.put(configuration.getId(), new Tuples._2<>(configuration, model));
         }
 
     }

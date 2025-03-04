@@ -11,10 +11,12 @@ import org.agentpower.agent.tool.AgentPowerChatModelDelegate;
 import org.agentpower.api.AgentPowerFunction;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.StatusCode;
+import org.agentpower.api.message.ChatMediaResourceProvider;
 import org.agentpower.common.RSAUtil;
 import org.agentpower.configuration.ConfigurationService;
 import org.agentpower.configuration.agent.AgentModelConfiguration;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
+import org.agentpower.configuration.resource.provider.ResourceProvider;
 import org.agentpower.infrastracture.Globals;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,11 +28,13 @@ import org.springframework.ai.model.Media;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MimeType;
 import reactor.core.publisher.Flux;
 import sun.misc.Unsafe;
 
@@ -46,6 +50,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class AgentPowerChatMemory implements ChatMemory {
     private final ChatMessageRepo chatMessageRepo;
+    private final ConfigurationService configurationService;
     @Override
     public void add(String conversationId, List<Message> messages) {
 
@@ -55,21 +60,12 @@ public class AgentPowerChatMemory implements ChatMemory {
     public List<Message> get(String conversationId, int lastN) {
         // conversationId == session id
 
-        return chatMessageRepo
+        return lastN == 0 ? List.of() : chatMessageRepo
                 // 查询会话内的最新n条消息
                 .findBy(Example.of(ChatMessageModel.builder().sessionId(conversationId).build()),
                         s -> s.sortBy(Sort.by(Sort.Direction.DESC, "createdTime")).limit(lastN))
                 .stream()
-                .map(m -> {
-                    if (m.getMessageType().equals(MessageType.USER.getValue())) {
-                        return new UserMessage(m.getTextContent(), null);
-                    } else if (m.getMessageType().equals(MessageType.ASSISTANT.getValue())) {
-                        return new AssistantMessage(m.getTextContent(), null);
-                    } else if (m.getMessageType().equals(MessageType.SYSTEM.getValue())) {
-                        return new SystemMessage(m.getTextContent());
-                    }
-                    throw new IllegalArgumentException("不支持的消息类型: " + m.getMessageType());
-                })
+                .map(this::transMessage)
                 .toList();
     }
 
@@ -78,23 +74,15 @@ public class AgentPowerChatMemory implements ChatMemory {
         chatMessageRepo.delete(ChatMessageModel.builder().sessionId(conversationId).build());
     }
 
-    public static Message BuildMessage(AiMessage aiMessage) {
-        List<Media> mediaList = new ArrayList<>();
-        if (!CollectionUtil.isEmpty(aiMessage.medias())) {
-            mediaList = aiMessage.medias().stream().map(AiMessageChatMemory::toSpringAiMedia).toList();
+    public Message transMessage(ChatMessageModel messageModel) {
+        List<Media> mediaList = AgentChatHelper.Prompt.extractMedia(messageModel, configurationService);
+        if (messageModel.getMessageType().equals(MessageType.USER.getValue())) {
+            return new UserMessage(messageModel.getTextContent(), mediaList);
+        } else if (messageModel.getMessageType().equals(MessageType.ASSISTANT.getValue())) {
+            return new AssistantMessage(messageModel.getTextContent(), Map.of(), List.of(), mediaList);
+        } else if (messageModel.getMessageType().equals(MessageType.SYSTEM.getValue())) {
+            return new SystemMessage(messageModel.getTextContent());
         }
-        if (aiMessage.type().equals(MessageType.ASSISTANT)) {
-            return new AssistantMessage(aiMessage.textContent());
-        }
-        if (aiMessage.type().equals(MessageType.USER)) {
-            return new UserMessage(aiMessage.textContent(), mediaList);
-        }
-        if (aiMessage.type().equals(MessageType.SYSTEM)) {
-            return new SystemMessage(aiMessage.textContent());
-        }
-        throw new BusinessException("不支持的消息类型");
-    }
-    public static Media toSpringAiMedia(AiMessage.Media media) {
-        return new Media(new MediaType(media.getType()), new URL(media.getData()));
+        throw new IllegalArgumentException("不支持的消息类型: " + messageModel.getMessageType());
     }
 }

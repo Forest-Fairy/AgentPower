@@ -14,8 +14,10 @@ import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.context.support.GenericApplicationContext;
+import reactor.core.publisher.Flux;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
@@ -47,7 +49,8 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
         AgentPowerChatModelDelegate chatModelToUse;
         if (chatModelId != null && !chatModelId.equals(chatModelDelegate.getAgentModelConfiguration().getId())) {
             // 通过新模型调用
-            chatModelToUse = new AgentPowerChatModelDelegate(requestId, configurationService.getAgentModelConfiguration(chatModelId));
+            chatModelToUse = Optional.ofNullable(AgentChatHelper.Runtime.getChatModelDelegate(requestId, chatModelId))
+                    .orElse(new AgentPowerChatModelDelegate(requestId, configurationService.getAgentModelConfiguration(chatModelId)));
         } else {
             chatModelToUse = chatModelDelegate;
         }
@@ -63,8 +66,8 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
                         .messageType(MessageType.SYSTEM.getValue())
                         .sessionId(newMessageObject.sessionId())
                         .textContent(newMessageObject.textContent())
-                        .agentModelConfigurationId(newMessageObject.setting().clientAgentModelId())
-                        .clientAgentServiceConfigurationId(newMessageObject.setting().clientAgentServiceId())
+                        .agentModelConfigurationId(chatModelToUse.getAgentModelConfiguration().getId())
+                        .clientAgentServiceConfigurationId(clientServiceToUse.getId())
                         .resourceProviders(JSON.toJSONString(newMessageObject.setting().resourceProviders()))
                         .userId(loginUserId)
                         .createdBy(loginUserId)
@@ -73,17 +76,30 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
                 .map(messageModel -> chatService.prompt(chatModelToUse, messageModel,
                         AgentChatHelper.Prompt.getFunctions(requestId, loginUserId, clientServiceToUse).keySet(),
                         messageModel.getChatMemoryCouplesCount()))
-                .;
+                .stream().flatMap(Flux::toStream)
+                .map(res -> res.getResult().getOutput().getText())
+                .collect(Collectors.joining());
+
     }
 
     public static class Builder {
         private GenericApplicationContext applicationContext;
+        private ConfigurationService configurationService;
+        private AgentChatService chatService;
         public AgentPowerToolCallbackResolver build() {
-            return new AgentPowerToolCallbackResolver(applicationContext);
+            return new AgentPowerToolCallbackResolver(applicationContext, configurationService, chatService);
         }
 
         public Builder applicationContext(GenericApplicationContext applicationContext) {
             this.applicationContext = applicationContext;
+            return this;
+        }
+        public Builder configurationService(ConfigurationService configurationService) {
+            this.configurationService = configurationService;
+            return this;
+        }
+        public Builder chatService(AgentChatService chatService) {
+            this.chatService = chatService;
             return this;
         }
     }

@@ -12,12 +12,12 @@ public abstract class AutoResolveFunction implements AgentPowerFunction {
     protected final String functionDesc;
     protected final String functionParamSchema;
     protected AutoResolveFunction() {
-        String functionName = Optional.of(this.getClass().getAnnotation(Component.class))
+        String functionName = Optional.ofNullable(this.getClass().getAnnotation(Component.class))
                 .map(Component::value)
                 .filter(StringUtils::isNotBlank)
                 // TODO 参考spring 如何获取函数名称
                 .orElse("");
-        String desc = Optional.of(this.getClass().getAnnotation(Description.class))
+        String desc = Optional.ofNullable(this.getClass().getAnnotation(Description.class))
                 .map(Description::value)
                 .filter(StringUtils::isNotBlank)
                 // TODO 参考spring 如何获取函数描述

@@ -3,7 +3,9 @@ package org.agentpower.infrastracture;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.SpecVersion;
 import io.swagger.v3.oas.models.info.Info;
+import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.agent.tool.AgentPowerToolCallbackResolver;
+import org.agentpower.configuration.ConfigurationService;
 import org.springdoc.core.service.OpenAPIService;
 import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
@@ -26,9 +28,11 @@ import java.util.List;
 public class AgentPowerConfigurations {
 
     public static class ToolCallbackConfiguration {
+        // TODO 需要验证这种方式bean是否能够被解析
         @Bean
         ToolCallbackResolver toolCallbackResolver(GenericApplicationContext applicationContext,
-                                                  List<FunctionCallback> functionCallbacks, List<ToolCallbackProvider> tcbProviders) {
+                                                  List<FunctionCallback> functionCallbacks, List<ToolCallbackProvider> tcbProviders,
+                                                  AgentChatService chatService, ConfigurationService configurationService) {
             List<FunctionCallback> allFunctionAndToolCallbacks = new ArrayList<>(functionCallbacks);
             tcbProviders.stream().map(pr -> List.of(pr.getToolCallbacks())).forEach(allFunctionAndToolCallbacks::addAll);
 
@@ -37,9 +41,10 @@ public class AgentPowerConfigurations {
             var springBeanToolCallbackResolver = SpringBeanToolCallbackResolver.builder()
                     .applicationContext(applicationContext)
                     .build();
-            // TODO 验证下该Bean是否会被解析
             var agentPowerToolCallbackResolver = AgentPowerToolCallbackResolver.builder()
                     .applicationContext(applicationContext)
+                    .chatService(chatService)
+                    .configurationService(configurationService)
                     .build();
             return new DelegatingToolCallbackResolver(List.of(staticToolCallbackResolver, springBeanToolCallbackResolver, agentPowerToolCallbackResolver));
         }
@@ -52,7 +57,7 @@ public class AgentPowerConfigurations {
             return new OpenAPI().info(new Info()
                     .title("AgentPower API Test Page")
                     .description("记得修改，统一版本信息")
-                    .version());
+                    .version(""));
         }
     }
 

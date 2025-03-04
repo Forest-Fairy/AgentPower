@@ -1,7 +1,7 @@
 package org.agentpower.agent.tool;
 
 import org.agentpower.configuration.agent.AgentModelConfiguration;
-import org.agentpower.configuration.platform.provider.PlatformProvider;
+import org.agentpower.configuration.agent.provider.AgentModelProvider;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
@@ -16,7 +16,7 @@ public class AgentPowerChatModelDelegate implements ChatModel {
     public AgentPowerChatModelDelegate(String requestId, AgentModelConfiguration agentModelConfiguration) {
         this.requestId = requestId;
         this.agentModelConfiguration = agentModelConfiguration;
-        this.chatModel = PlatformProvider.GetModel(agentModelConfiguration);
+        this.chatModel = AgentModelProvider.GetModel(agentModelConfiguration);
     }
 
     public String getRequestId() {
