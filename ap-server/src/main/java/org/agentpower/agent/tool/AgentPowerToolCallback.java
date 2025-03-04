@@ -3,7 +3,7 @@ package org.agentpower.agent.tool;
 import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Nonnull;
 import org.agentpower.agent.AgentChatHelper;
-import org.agentpower.api.AgentPowerFunction;
+import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.StatusCode;
 import org.agentpower.api.message.ChatMessageObject;
@@ -32,11 +32,11 @@ public class AgentPowerToolCallback implements ToolCallback {
         this.loginUserId = Globals.User.getLoginUser().getId();
         this.clientServiceConfiguration = clientServiceConfiguration;
         // TODO 如果requestId 是空 导致获取不到函数定义 那就只能重新发一条消息给客户端以拉取客户端的函数信息
-        AgentPowerFunction agentPowerFunction = AgentChatHelper.Runtime.getFunctionDefinition(requestId, clientServiceConfiguration.getId(), functionName);
+        AgentPowerFunctionDefinition agentPowerFunctionDefinition = AgentChatHelper.Runtime.getFunctionDefinition(requestId, clientServiceConfiguration.getId(), functionName);
         this.toolDefinition = ToolDefinition.builder()
-                .name(agentPowerFunction.functionName())
-                .description(agentPowerFunction.functionDesc())
-                .inputSchema(agentPowerFunction.functionParamSchema())
+                .name(agentPowerFunctionDefinition.functionName())
+                .description(agentPowerFunctionDefinition.functionDesc())
+                .inputSchema(agentPowerFunctionDefinition.functionParamSchema())
                 .build();
     }
 

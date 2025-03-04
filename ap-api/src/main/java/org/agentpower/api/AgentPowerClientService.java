@@ -12,6 +12,6 @@ public interface AgentPowerClientService {
     /**
      * @return all functions in client
      */
-    List<? extends AgentPowerFunction> listFunctions();
+    List<? extends AgentPowerFunctionDefinition> listFunctions();
 
 }

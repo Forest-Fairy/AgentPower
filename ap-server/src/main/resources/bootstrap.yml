@@ -3,4 +3,4 @@ server:
 spring:
   application:
     name: agent-power-server
-    version: @project.version@
+    version: ap_1.0.1

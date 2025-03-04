@@ -1,7 +1,7 @@
 package org.agentpower.client;
 
 import lombok.AllArgsConstructor;
-import org.agentpower.api.AgentPowerFunction;
+import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.client.service.AgentPowerClientServiceImpl;
 import org.springframework.stereotype.Controller;
@@ -24,7 +24,7 @@ public class AgentPowerClientController {
     }
 
     @GetMapping("listFunctions")
-    public List<? extends AgentPowerFunction> listFunctions() {
+    public List<? extends AgentPowerFunctionDefinition> listFunctions() {
         return clientService.listFunctions();
     }
 

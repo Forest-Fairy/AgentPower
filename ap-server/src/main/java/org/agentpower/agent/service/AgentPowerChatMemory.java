@@ -1,50 +1,19 @@
 package org.agentpower.agent.service;
 
-import cn.hutool.core.collection.CollectionUtil;
-import com.alibaba.fastjson2.JSON;
 import lombok.AllArgsConstructor;
 import org.agentpower.agent.AgentChatHelper;
 import org.agentpower.agent.model.ChatMessageModel;
-import org.agentpower.agent.repo.AgentSessionRepo;
 import org.agentpower.agent.repo.ChatMessageRepo;
-import org.agentpower.agent.tool.AgentPowerChatModelDelegate;
-import org.agentpower.api.AgentPowerFunction;
-import org.agentpower.api.FunctionRequest;
-import org.agentpower.api.StatusCode;
-import org.agentpower.api.message.ChatMediaResourceProvider;
-import org.agentpower.common.RSAUtil;
 import org.agentpower.configuration.ConfigurationService;
-import org.agentpower.configuration.agent.AgentModelConfiguration;
-import org.agentpower.configuration.client.ClientServiceConfiguration;
-import org.agentpower.configuration.resource.provider.ResourceProvider;
-import org.agentpower.infrastracture.Globals;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.*;
 import org.springframework.ai.model.Media;
-import org.springframework.ai.vectorstore.SearchRequest;
-import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.ai.vectorstore.filter.Filter;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeType;
-import reactor.core.publisher.Flux;
-import sun.misc.Unsafe;
 
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor

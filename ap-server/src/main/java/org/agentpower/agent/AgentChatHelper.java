@@ -4,7 +4,7 @@ import com.alibaba.fastjson2.JSON;
 import lombok.Data;
 import org.agentpower.agent.tool.AgentPowerChatModelDelegate;
 import org.agentpower.agent.model.ChatMessageModel;
-import org.agentpower.api.AgentPowerFunction;
+import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.StatusCode;
 import org.agentpower.api.message.ChatMediaResource;
@@ -37,14 +37,14 @@ public class AgentChatHelper {
         private Registry() {}
 
         public static void startConversation(String requestId, ChatMessageModel messageModel, AgentPowerChatModelDelegate chatModel,
-                                             ClientServiceConfiguration clientServiceConfiguration, Map<String, AgentPowerFunction> functions) {
+                                             ClientServiceConfiguration clientServiceConfiguration, Map<String, AgentPowerFunctionDefinition> functions) {
             // TODO 校验空
             ChatRuntime runtime = new ChatRuntime(messageModel, chatModel);
             runtime.cacheClientFunctions(clientServiceConfiguration, functions);
             CHAT_RUNTIME_CACHE.put(requestId, runtime);
         }
 
-        public static void updateConversationCache(String requestId, ClientServiceConfiguration clientServiceConfiguration, Map<String, AgentPowerFunction> functions) {
+        public static void updateConversationCache(String requestId, ClientServiceConfiguration clientServiceConfiguration, Map<String, AgentPowerFunctionDefinition> functions) {
             ChatRuntime runtime = CHAT_RUNTIME_CACHE.get(requestId);
             if (runtime == null) {
                 throw new IllegalStateException("会话已终止");
@@ -73,13 +73,15 @@ public class AgentChatHelper {
             ).param("knowledge", systemKnowledge);
         }
 
-        public static void wrapUserPrompt(ChatClient.PromptUserSpec promptUserSpec, ChatMessageModel messageModel, ConfigurationService configurationService) {
+        public static void wrapUserPrompt(
+                ChatClient.PromptUserSpec promptUserSpec, ChatMessageModel messageModel,
+                ConfigurationService configurationService) {
             String textContent = messageModel.getTextContent();
             if (textContent != null) {
                 promptUserSpec.text(textContent);
             }
             List<Media> mediaList = extractMedia(messageModel, configurationService);
-            if (mediaList == null) return;
+            if (mediaList.isEmpty()) return;
             promptUserSpec.media(mediaList.toArray(new Media[0]));
         }
 
@@ -111,12 +113,12 @@ public class AgentChatHelper {
 
 
         private static final Map<String, Object> FUNCTIONS_CACHE = new ConcurrentHashMap<>();
-        public static Map<String, AgentPowerFunction> getFunctions(String requestId, String userId, ClientServiceConfiguration clientServiceConfiguration) {
+        public static Map<String, AgentPowerFunctionDefinition> getFunctions(String requestId, String userId, ClientServiceConfiguration clientServiceConfiguration) {
             if (clientServiceConfiguration == null) {
                 // 未启用智能体
                 return Map.of();
             }
-            Map<String, AgentPowerFunction> functionMap = Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
+            Map<String, AgentPowerFunctionDefinition> functionMap = Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
                     .map(runtime -> runtime.getClients().get(clientServiceConfiguration.getId()))
                     .map(Tuples._2::t1)
                     .orElse(null);
@@ -141,20 +143,20 @@ public class AgentChatHelper {
                     .build());
             String functionDefinitionKey = requestId;
             try {
-                List<AgentPowerFunction> functions = CompletableFuture.supplyAsync(() -> {
+                List<AgentPowerFunctionDefinition> functions = CompletableFuture.supplyAsync(() -> {
                     Object f;
                     while ((f = FUNCTIONS_CACHE.remove(functionDefinitionKey)) == null) {
                         Unsafe.getUnsafe().park(true, TimeUnit.MILLISECONDS.toNanos(500));
                     }
-                    return (List<AgentPowerFunction>) f;
+                    return (List<AgentPowerFunctionDefinition>) f;
                 }).get(30, TimeUnit.SECONDS);
-                return functions.stream().collect(Collectors.toMap(AgentPowerFunction::functionName, func -> func, (o1, o2) -> o2));
+                return functions.stream().collect(Collectors.toMap(AgentPowerFunctionDefinition::functionName, func -> func, (o1, o2) -> o2));
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 FUNCTIONS_CACHE.put(functionDefinitionKey, StatusCode.REQUEST_ABORT);
                 throw new RuntimeException(e);
             }
         }
-        public static int receiveFunctionList(String requestId, List<? extends AgentPowerFunction> functions) {
+        public static int receiveFunctionList(String requestId, List<? extends AgentPowerFunctionDefinition> functions) {
             String functionDefinitionKey = requestId;
             Object old = FUNCTIONS_CACHE.put(functionDefinitionKey, functions);
             if (old instanceof Integer abort) {
@@ -168,7 +170,7 @@ public class AgentChatHelper {
 
     public static class Runtime {
         private Runtime() {}
-        public static AgentPowerFunction getFunctionDefinition(String requestId, String clientServiceId, String functionName) {
+        public static AgentPowerFunctionDefinition getFunctionDefinition(String requestId, String clientServiceId, String functionName) {
             return Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
                     .map(ChatRuntime::getClients)
                     .map(cs -> cs.get(clientServiceId).t1())
@@ -231,7 +233,7 @@ public class AgentChatHelper {
         ChatMessageModel messageModel;
         AgentPowerChatModelDelegate chatModel;
         Map<String, Tuples._2<AgentModelConfiguration, AgentPowerChatModelDelegate>> models;
-        Map<String, Tuples._2<ClientServiceConfiguration, Map<String, AgentPowerFunction>>> clients;
+        Map<String, Tuples._2<ClientServiceConfiguration, Map<String, AgentPowerFunctionDefinition>>> clients;
 
         public ChatRuntime(ChatMessageModel messageModel, AgentPowerChatModelDelegate chatModel) {
             this.messageModel = messageModel;
@@ -240,7 +242,7 @@ public class AgentChatHelper {
             this.clients = new ConcurrentHashMap<>();
         }
 
-        void cacheClientFunctions(ClientServiceConfiguration configuration, Map<String, AgentPowerFunction> functions) {
+        void cacheClientFunctions(ClientServiceConfiguration configuration, Map<String, AgentPowerFunctionDefinition> functions) {
             this.clients.put(configuration.getId(), new Tuples._2<>(configuration, functions));
         }
 

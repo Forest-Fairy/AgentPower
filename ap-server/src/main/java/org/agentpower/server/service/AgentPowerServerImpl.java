@@ -2,9 +2,8 @@ package org.agentpower.server.service;
 
 
 import org.agentpower.agent.AgentChatHelper;
-import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.agent.tool.AgentPowerToolCallback;
-import org.agentpower.api.AgentPowerFunction;
+import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.AgentPowerServer;
 import org.springframework.stereotype.Service;
 
@@ -18,7 +17,7 @@ public class AgentPowerServerImpl implements AgentPowerServer {
     }
 
     @Override
-    public int sendFunctionList(String requestId, String clientServiceId, List<? extends AgentPowerFunction> functions) {
+    public int sendFunctionList(String requestId, String clientServiceId, List<? extends AgentPowerFunctionDefinition> functions) {
         return AgentChatHelper.Prompt.receiveFunctionList(requestId, functions);
     }
 }

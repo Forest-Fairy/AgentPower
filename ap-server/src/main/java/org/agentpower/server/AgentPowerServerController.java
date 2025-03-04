@@ -1,9 +1,8 @@
 package org.agentpower.server;
 
 import lombok.AllArgsConstructor;
-import org.agentpower.api.AgentPowerFunction;
+import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.AgentPowerServer;
-import org.agentpower.server.dto.AgentFunctionDto;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,8 +27,8 @@ public class AgentPowerServerController {
 
     @RequestMapping("sendFunctionList")
     public int sendFunctionList(@RequestParam String requestId, @RequestParam FunctionsParams params) throws IOException {
-        return agentPowerServerService.sendFunctionList(requestId, params.clientServiceId, params.functions);
+        return agentPowerServerService.sendFunctionList(requestId, params.clientServiceId, params.functionDefinitions);
     }
-    public record FunctionsParams(@RequestParam String clientServiceId, @RequestParam List<AgentPowerFunction.Function> functions) {}
+    public record FunctionsParams(@RequestParam String clientServiceId, @RequestParam List<AgentPowerFunctionDefinition.FunctionDefinition> functionDefinitions) {}
 
 }

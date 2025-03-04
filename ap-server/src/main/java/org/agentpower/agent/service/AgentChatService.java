@@ -7,7 +7,7 @@ import org.agentpower.agent.tool.AgentPowerChatModelDelegate;
 import org.agentpower.agent.model.ChatMessageModel;
 import org.agentpower.agent.repo.AgentSessionRepo;
 import org.agentpower.agent.repo.ChatMessageRepo;
-import org.agentpower.api.AgentPowerFunction;
+import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.configuration.ConfigurationService;
 import org.agentpower.configuration.agent.AgentModelConfiguration;
@@ -17,9 +17,11 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.data.neo4j.core.Neo4jClient;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -31,6 +33,7 @@ import java.util.*;
 public class AgentChatService {
     private final ConfigurationService configurationService;
     private final VectorStore vectorStore;
+    private final Neo4jClient neo4jClient;
     private final ChatMessageRepo chatMessageRepo;
     private final AgentSessionRepo agentSessionRepo;
     private final AgentPowerChatMemory chatMemory;
@@ -40,7 +43,7 @@ public class AgentChatService {
         AgentModelConfiguration agentModelConfiguration = configurationService.getAgentModelConfiguration(messageModel.getAgentModelConfigurationId());
         AgentPowerChatModelDelegate chatModel = new AgentPowerChatModelDelegate(requestId, agentModelConfiguration);
         boolean hasClientService = StringUtils.isNotBlank(messageModel.getClientAgentServiceConfigurationId());
-        Map<String, AgentPowerFunction> functions;
+        Map<String, AgentPowerFunctionDefinition> functions;
         if (hasClientService) {
             ClientServiceConfiguration clientServiceConfiguration = configurationService
                     .getClientServiceConfiguration(messageModel.getClientAgentServiceConfigurationId());
@@ -68,35 +71,84 @@ public class AgentChatService {
                 .system(systemSpec -> AgentChatHelper.Prompt.wrapSystemPrompt(systemSpec, messageModel))
                 .user(userSpec -> AgentChatHelper.Prompt.wrapUserPrompt(userSpec, messageModel, configurationService))
                 // 工具列表
-                .tools(functionNames.stream().map(n -> AgentChatHelper.FunctionInfo.wrapFunctionName(
-                        messageModel.getRequestId(), messageModel.getClientAgentServiceConfigurationId(), n)))
+                .tools(functionNames.stream().map(name -> AgentChatHelper.FunctionInfo.wrapFunctionName(
+                        messageModel.getRequestId(), messageModel.getClientAgentServiceConfigurationId(), name))
+                        .toList().toArray(new String[0]))
                 // 先尝试不传入toolContext
 //                .toolContext(Map.of("requestId", requestId))
                 .advisors(advisorSpec -> {
                     // 历史记录
-                    advisorSpec.advisors(new MessageChatMemoryAdvisor(chatMemory, messageModel.getSessionId(), chatMemoryCouplesCount * 2));
+                    memory(messageModel, chatMemoryCouplesCount, advisorSpec);
                     // 向量检索增强
-                    Optional.ofNullable(messageModel.getKnowledgeBaseId()).filter(StringUtils::isNotBlank)
-                            .ifPresent(knowledgeBaseId -> {
-                                String promptWithContext = """
-                                        以下可能有可供参考的信息
-                                        ---start---
-                                        {question_answer_context}
-                                        ---end---
-                                        """;
-                                advisorSpec.advisors(new QuestionAnswerAdvisor(
-                                        vectorStore,
-                                        SearchRequest.builder()
-                                                .filterExpression(new Filter.Expression(
-                                                        Filter.ExpressionType.EQ,
-                                                        new Filter.Key("knowledgeBaseId"),
-                                                        new Filter.Value(knowledgeBaseId)))
-                                                .build(),
-                                        promptWithContext));
-                            });
+                    rag(advisorSpec, messageModel);
+                    // 知识图谱增强检索
+                    graph(advisorSpec, messageModel);
                 })
                 .stream()
                 .chatResponse();
+    }
+
+    private void memory(ChatMessageModel messageModel, int chatMemoryCouplesCount, ChatClient.AdvisorSpec advisorSpec) {
+        advisorSpec.advisors(new MessageChatMemoryAdvisor(chatMemory, messageModel.getSessionId(), chatMemoryCouplesCount * 2));
+    }
+
+    private void rag(ChatClient.AdvisorSpec advisorSpec, ChatMessageModel messageModel) {
+        Optional.ofNullable(messageModel.getKnowledgeBaseId()).filter(StringUtils::isNotBlank)
+                .ifPresent(knowledgeBaseId -> {
+                    String promptWithContext = """
+                            以下可能有可供参考的信息
+                            ---start---
+                            {question_answer_context}
+                            ---end---
+                            """;
+                    advisorSpec.advisors(new QuestionAnswerAdvisor(
+                            vectorStore,
+                            SearchRequest.builder()
+                                    .filterExpression(new Filter.Expression(
+                                            Filter.ExpressionType.EQ,
+                                            new Filter.Key("knowledgeBaseId"),
+                                            new Filter.Value(knowledgeBaseId)))
+                                    .build(),
+                            promptWithContext));
+                });
+    }
+
+    private void graph(ChatClient.AdvisorSpec advisorSpec, ChatMessageModel messageModel) {
+        Optional.ofNullable(messageModel.getKnowledgeBaseId()).filter(StringUtils::isNotBlank)
+                .ifPresent(knowledgeBaseId -> {
+                    String promptWithContext = """
+                            以下可能有可供参考的信息
+                            ---start---
+                            {question_answer_context}
+                            ---end---
+                            """;
+                    advisorSpec.advisors(new QuestionAnswerAdvisor(
+                            vectorStore,
+                            SearchRequest.builder()
+                                    .filterExpression(new Filter.Expression(
+                                            Filter.ExpressionType.EQ,
+                                            new Filter.Key("knowledgeBaseId"),
+                                            new Filter.Value(knowledgeBaseId)))
+                                    .build(),
+                            promptWithContext));
+                });
+
+        EmbeddingModel
+        List<Double> embed = ChunkController.floatsToDoubles(embeddingModel.embed(query));
+        String result = neo4jClient.query("""
+                        CALL db.index.vector.queryNodes('form_10k_chunks', 1, $embedding)
+                        yield node, score
+                        match window=(:Chunk)-[:NEXT*0..1]->(node)-[:NEXT*0..1]->(:Chunk)
+                        with nodes(window) as chunkList, node, score
+                        unwind chunkList as chunkRows
+                        with collect(chunkRows.text) as textList, node, score
+                        return apoc.text.join(textList, " \\n ")
+                        """)
+                .bind(embed).to("embedding")
+                .fetchAs(String.class).first()
+                .orElseThrow(() -> new BusinessException("未找到相似文档"));
+        String content = promptTemplate.createMessage(Map.of("question_answer_context", result)).getContent();
+        return chatModel.call(new UserMessage(content + "\n" + query));
     }
 
 }
