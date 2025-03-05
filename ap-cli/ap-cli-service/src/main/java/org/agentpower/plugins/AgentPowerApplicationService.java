@@ -1,10 +1,11 @@
-package org.agentpower.infrastructure;
+package org.agentpower.plugins;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.io.FileUtil;
 import lombok.val;
 import org.agentpower.client.service.AgentPowerClientServiceImpl;
 import org.agentpower.common.Tuples;
+import org.agentpower.infrastructure.AgentPowerFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -413,6 +414,9 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
      * @param beans bean名称
      */
     private synchronized void unregisterBeans(List<String> beans) {
+        if (CollectionUtils.isEmpty(beans)) {
+            return;
+        }
         // noinspection SynchronizeOnNonFinalField
         synchronized (clientService) {
             beans.forEach(beanName -> {
@@ -429,6 +433,7 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
                     logError(e, "卸载Bean {} 时出错: {}", beanName, e.getMessage());
                 }
             });
+            clientService.refreshResolver();
         }
     }
 

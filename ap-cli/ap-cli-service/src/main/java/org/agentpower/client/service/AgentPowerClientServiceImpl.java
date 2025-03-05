@@ -23,8 +23,8 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
 
     public AgentPowerClientServiceImpl(GenericApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
-        toolCallbackResolver = createResolver();
         beansOfType = new ConcurrentHashMap<>(applicationContext.getBeansOfType(AgentPowerFunction.class));
+        refreshResolver();
     }
 
     public void addTool(String toolName, Object function) {
@@ -44,9 +44,6 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
         val old = beansOfType.remove(toolName);
         if (old == null) {
             throw new IllegalArgumentException("工具不存在，请先添加：" + toolName);
-        } else {
-            // 需要新建一个解析器 否则会有缓存
-            toolCallbackResolver = createResolver();
         }
     }
 
@@ -89,8 +86,8 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
                 .toList();
     }
 
-    private SpringBeanToolCallbackResolver createResolver() {
-        return SpringBeanToolCallbackResolver.builder().applicationContext(applicationContext).build();
+    public void refreshResolver() {
+        toolCallbackResolver = SpringBeanToolCallbackResolver.builder().applicationContext(applicationContext).build();
     }
 
 //        return functionMap

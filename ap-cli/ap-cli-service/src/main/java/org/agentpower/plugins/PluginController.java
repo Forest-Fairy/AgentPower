@@ -1,7 +1,6 @@
-package org.agentpower.controller;
+package org.agentpower.plugins;
 
 import lombok.AllArgsConstructor;
-import org.agentpower.infrastructure.AgentPowerApplicationService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
