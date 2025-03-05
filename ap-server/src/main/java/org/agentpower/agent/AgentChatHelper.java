@@ -16,7 +16,7 @@ import org.agentpower.configuration.agent.AgentModelConfiguration;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.configuration.resource.ResourceProviderConfiguration;
 import org.agentpower.configuration.resource.provider.ResourceProvider;
-import org.agentpower.infrastracture.Globals;
+import org.agentpower.infrastructure.Globals;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.model.Media;

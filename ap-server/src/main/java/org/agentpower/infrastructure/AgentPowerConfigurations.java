@@ -1,12 +1,10 @@
-package org.agentpower.infrastracture;
+package org.agentpower.infrastructure;
 
 import io.swagger.v3.oas.models.OpenAPI;
-import io.swagger.v3.oas.models.SpecVersion;
 import io.swagger.v3.oas.models.info.Info;
 import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.agent.tool.AgentPowerToolCallbackResolver;
 import org.agentpower.configuration.ConfigurationService;
-import org.springdoc.core.service.OpenAPIService;
 import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.resolution.DelegatingToolCallbackResolver;

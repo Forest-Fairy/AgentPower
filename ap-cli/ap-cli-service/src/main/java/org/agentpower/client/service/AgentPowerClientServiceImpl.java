@@ -2,30 +2,63 @@ package org.agentpower.client.service;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import com.alibaba.fastjson2.JSON;
-import lombok.AllArgsConstructor;
 import lombok.val;
 import org.agentpower.api.AgentPowerClientService;
 import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
-import org.agentpower.infrastracture.AgentPowerFunction;
+import org.agentpower.infrastructure.AgentPowerFunction;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.tool.resolution.SpringBeanToolCallbackResolver;
-import org.springframework.ai.tool.resolution.ToolCallbackResolver;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
-@AllArgsConstructor
 public class AgentPowerClientServiceImpl implements AgentPowerClientService {
     private final GenericApplicationContext applicationContext;
-    private final ToolCallbackResolver toolCallbackResolver =
-            SpringBeanToolCallbackResolver.builder().applicationContext(applicationContext).build();
+    private SpringBeanToolCallbackResolver toolCallbackResolver;
+    private final Map<String, AgentPowerFunction> beansOfType;
+
+    public AgentPowerClientServiceImpl(GenericApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+        toolCallbackResolver = createResolver();
+        beansOfType = new ConcurrentHashMap<>(applicationContext.getBeansOfType(AgentPowerFunction.class));
+    }
+
+    public void addTool(String toolName, Object function) {
+        if (function instanceof AgentPowerFunction func) {
+            val old = beansOfType.put(toolName, func);
+            if (old != null) {
+                beansOfType.put(toolName, old);
+                throw new IllegalArgumentException("工具已存在，请先卸载：" + toolName);
+            }
+        } else {
+            Objects.requireNonNull(function, "工具对象不存在，请检查代码逻辑");
+            throw new IllegalStateException("工具类型有误：" + function.getClass());
+        }
+    }
+
+    public void removeTool(String toolName) {
+        val old = beansOfType.remove(toolName);
+        if (old == null) {
+            throw new IllegalArgumentException("工具不存在，请先添加：" + toolName);
+        } else {
+            // 需要新建一个解析器 否则会有缓存
+            toolCallbackResolver = createResolver();
+        }
+    }
+
     @Override
     public FunctionRequest.CallResult call(String functionName, Map<String, Object> params) {
+        val classLoader = Thread.currentThread().getContextClassLoader();
         FunctionRequest.CallResult callResult;
         try {
+            // 将线程类加载器切换到创建bean的加载器，以确保bean执行过程能获取到jar包的类
+            val agentPowerFunction = Optional.ofNullable(beansOfType.get(functionName))
+                    .orElseThrow(() -> new IllegalArgumentException("客户端服务不存在工具：" + functionName));
+            Thread.currentThread().setContextClassLoader(agentPowerFunction.getClass().getClassLoader());
             val fcb = Optional.ofNullable(toolCallbackResolver.resolve(functionName))
                     .orElseThrow(() -> new IllegalArgumentException("客户端服务不存在工具：" + functionName));
             val result = fcb.call(JSON.toJSONString(params));
@@ -41,18 +74,23 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
         } catch (Throwable throwable) {
             callResult = new FunctionRequest.CallResult(
                     FunctionRequest.CallResult.Type.ERROR, ExceptionUtil.stacktraceToString(throwable));
+        } finally {
+            Thread.currentThread().setContextClassLoader(classLoader);
         }
         return callResult;
     }
 
     @Override
     public List<? extends AgentPowerFunctionDefinition> listFunctions() {
-        Map<String, AgentPowerFunction> functionMap = this.applicationContext.getBeansOfType(AgentPowerFunction.class);
-        return functionMap.keySet().stream().map(toolCallbackResolver::resolve)
+        return beansOfType.keySet().stream().map(toolCallbackResolver::resolve)
                 .filter(Objects::nonNull)
                 .map(func -> new AgentPowerFunctionDefinition.FunctionDefinition(
                         func.getName(), func.getDescription(), func.getInputTypeSchema()))
                 .toList();
+    }
+
+    private SpringBeanToolCallbackResolver createResolver() {
+        return SpringBeanToolCallbackResolver.builder().applicationContext(applicationContext).build();
     }
 
 //        return functionMap

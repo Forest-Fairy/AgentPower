@@ -3,7 +3,7 @@ package org.agentpower.client.plugins.file.reader;
 import cn.hutool.core.io.FileUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import org.agentpower.infrastracture.AgentPowerFunction;
+import org.agentpower.infrastructure.AgentPowerFunction;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Component;
 

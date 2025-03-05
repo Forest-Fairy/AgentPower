@@ -1,4 +1,4 @@
-package org.agentpower.infrastracture;
+package org.agentpower.infrastructure;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

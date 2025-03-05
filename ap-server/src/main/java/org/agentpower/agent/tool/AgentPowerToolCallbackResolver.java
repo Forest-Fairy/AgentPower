@@ -9,7 +9,7 @@ import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.api.message.ChatMessageObject;
 import org.agentpower.configuration.ConfigurationService;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
-import org.agentpower.infrastracture.Globals;
+import org.agentpower.infrastructure.Globals;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;

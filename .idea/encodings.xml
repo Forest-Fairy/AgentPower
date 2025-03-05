@@ -17,6 +17,10 @@
     <file url="file://$PROJECT_DIR$/ap-dependencies/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-docs/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-docs/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ap-front-end/ap-front-end-client/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ap-front-end/ap-front-end-client/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ap-front-end/ap-front-end-server/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ap-front-end/ap-front-end-server/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-front-end/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-front-end/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-server/src/main/java" charset="UTF-8" />

@@ -5,17 +5,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.agentpower</groupId>
-        <artifactId>AgentPower</artifactId>
-        <version>${revision}</version>
+        <artifactId>ap-front-end</artifactId>
+        <version>1.0.1</version>
     </parent>
 
-    <artifactId>ap-front-end</artifactId>
-    <packaging>pom</packaging>
-    <description>front end of agent power</description>
-    <modules>
-        <module>ap-front-end-client</module>
-        <module>ap-front-end-server</module>
-    </modules>
+    <artifactId>ap-front-end-client</artifactId>
+    <description>ap客户端应用前端：主要是注册卸载插件等操作</description>
 
     <properties>
     </properties>

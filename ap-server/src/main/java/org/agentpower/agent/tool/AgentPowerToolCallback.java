@@ -9,7 +9,7 @@ import org.agentpower.api.StatusCode;
 import org.agentpower.api.message.ChatMessageObject;
 import org.agentpower.common.RSAUtil;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
-import org.agentpower.infrastracture.Globals;
+import org.agentpower.infrastructure.Globals;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.http.codec.ServerSentEvent;
