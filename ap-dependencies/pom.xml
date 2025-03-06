@@ -33,8 +33,8 @@
         <!-- Jupiter -->
         <junit_jupiter_version>5.9.3</junit_jupiter_version>
 
-        <!-- graalvm build tools version -->
-        <native-build-tools-plugin.version>0.9.28</native-build-tools-plugin.version>
+        <!-- Front End -->
+        <frontend-maven-plugin.version>1.12.1</frontend-maven-plugin.version>
 
     </properties>
 
@@ -110,18 +110,4 @@
         </dependencies>
     </dependencyManagement>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.graalvm.buildtools</groupId>
-                <artifactId>native-maven-plugin</artifactId>
-                <version>${native-build-tools-plugin.version}</version>
-            </plugin>
-            <!--            <plugin>-->
-            <!--                <groupId>org.springframework.boot</groupId>-->
-            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
-            <!--                <version>${spring-boot.version}</version>-->
-            <!--            </plugin>-->
-        </plugins>
-    </build>
 </project>

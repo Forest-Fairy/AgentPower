@@ -28,4 +28,39 @@
             <artifactId>spring-ai-core</artifactId>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+<!--                    <excludes>-->
+<!--                        <exclude>*.yaml</exclude>-->
+<!--                        <exclude>*.xml</exclude>-->
+<!--                    </excludes>-->
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>${artifactId}</id>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <finalName>agent-power-client-service</finalName>
+                            <descriptors>
+                                <descriptor>src/main/assembly/ap-cli-service.xml</descriptor>
+                            </descriptors>
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

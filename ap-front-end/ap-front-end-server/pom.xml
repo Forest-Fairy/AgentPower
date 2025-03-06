@@ -6,13 +6,21 @@
     <parent>
         <groupId>org.agentpower</groupId>
         <artifactId>ap-front-end</artifactId>
-        <version>1.0.1</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>ap-front-end-server</artifactId>
     <description>ap服务端应用前端：交互界面以及信息操作等</description>
 
-    <properties>
-    </properties>
+    <properties/>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

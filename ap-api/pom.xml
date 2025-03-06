@@ -15,4 +15,19 @@
     <properties>
     </properties>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+<!--                    <excludes>-->
+<!--                        <exclude>sql/</exclude>-->
+<!--                        <exclude>*.yaml</exclude>-->
+<!--                    </excludes>-->
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
