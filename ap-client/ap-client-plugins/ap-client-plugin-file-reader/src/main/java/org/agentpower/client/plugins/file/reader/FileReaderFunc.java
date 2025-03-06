@@ -7,6 +7,7 @@ import org.agentpower.infrastructure.AgentPowerFunction;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.Charset;
 import java.util.function.Function;
 
 @Component("fileReader")
@@ -14,7 +15,7 @@ import java.util.function.Function;
 public class FileReaderFunc implements AgentPowerFunction, Function<FileReaderFunc.Request, String> {
     @Override
     public String apply(Request request) {
-        return FileUtil.readString(request.filePath, request.encoding);
+        return returnDirectResult(FileUtil.readString(request.filePath, Charset.forName(request.encoding)));
     }
 
     public record Request(

@@ -85,6 +85,7 @@
 <!--                    </excludes>-->
                 </configuration>
             </plugin>
+            <!-- 将所有依赖解压到jar包中 可能这样执行比较快 未验证 -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>

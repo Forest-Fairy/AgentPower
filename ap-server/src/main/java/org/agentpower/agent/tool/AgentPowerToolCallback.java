@@ -10,6 +10,7 @@ import org.agentpower.api.message.ChatMessageObject;
 import org.agentpower.common.RSAUtil;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.infrastructure.Globals;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import org.springframework.http.codec.ServerSentEvent;
@@ -47,7 +48,7 @@ public class AgentPowerToolCallback implements ToolCallback {
 
     @Override
     public String call(String toolInput) {
-        FunctionRequest.CallResult callResult = JSON.parseObject(callClientFunction(toolInput), FunctionRequest.CallResult.class);
+        FunctionRequest.CallResult callResult = callClientFunction(toolInput);
         if (callResult.type().equals(FunctionRequest.CallResult.Type.ERROR)) {
             throw new RuntimeException(toolDefinition.name() + " 执行出错：" + callResult.content());
         }
@@ -64,18 +65,31 @@ public class AgentPowerToolCallback implements ToolCallback {
 
     private static final Map<String, Object> CALL_RESULT_CACHE =  new ConcurrentHashMap<>();
 
-    private String callClientFunction(String toolInput) {
+    private FunctionRequest.CallResult callClientFunction(String toolInput) {
         Globals.Client.sendMessage(requestId, buildEvent(
                 requestId, loginUserId, FunctionRequest.Event.FUNC_CALL,
                 toolDefinition.name(), clientServiceConfiguration, toolInput));
         String functionDefinitionKey = wrapFunctionDefinitionKey(requestId, toolDefinition.name());
         try {
-            return CompletableFuture.supplyAsync(() -> {
-                while (!CALL_RESULT_CACHE.containsKey(functionDefinitionKey)) {
+            String callResult = CompletableFuture.supplyAsync(() -> {
+                Object content;
+                while ((content = CALL_RESULT_CACHE.remove(functionDefinitionKey)) == null) {
                     Unsafe.getUnsafe().park(true, TimeUnit.MILLISECONDS.toNanos(500));
                 }
-                return String.valueOf(CALL_RESULT_CACHE.remove(functionDefinitionKey));
+                return String.valueOf(content);
             }).get(30, TimeUnit.SECONDS);
+            FunctionRequest.CallResult result;
+            try {
+                result = JSON.parseObject(callResult, FunctionRequest.CallResult.class);
+            } catch (Exception e) {
+                result = new FunctionRequest.CallResult(
+                        FunctionRequest.CallResult.Type.ERROR, callResult);
+            }
+            if (result.type().equals(FunctionRequest.CallResult.Type.ERROR)) {
+                // 获取失败
+                throw new IllegalStateException("函数调用失败：" + result.content());
+            }
+            return result;
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
             CALL_RESULT_CACHE.put(functionDefinitionKey, StatusCode.REQUEST_ABORT);
             throw new RuntimeException(e);

@@ -5,15 +5,15 @@ import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.message.ChatMessageObject;
 
 public interface AgentPowerFunction {
-    default String wrapFunctionResult(String result) {
+    default String returnDirectResult(String result) {
         return toJSONString(new FunctionRequest.CallResult(
                 FunctionRequest.CallResult.Type.DIRECT, result));
     }
-    default String wrapAgentCall(ChatMessageObject messageObject) {
+    default String returnAgentCallEvent(ChatMessageObject messageObject) {
         return toJSONString(new FunctionRequest.CallResult(
                 FunctionRequest.CallResult.Type.AGENT, toJSONString(messageObject)));
     }
-    default String wrapErrorResult(String error) {
+    default String returnErrorResult(String error) {
         return toJSONString(new FunctionRequest.CallResult(
                 FunctionRequest.CallResult.Type.ERROR, error));
     }

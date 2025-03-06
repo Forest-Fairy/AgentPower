@@ -5,6 +5,7 @@ import lombok.Data;
 import org.agentpower.agent.tool.AgentPowerChatModelDelegate;
 import org.agentpower.agent.model.ChatMessageModel;
 import org.agentpower.api.AgentPowerFunctionDefinition;
+import org.agentpower.api.AgentPowerServer;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.StatusCode;
 import org.agentpower.api.message.ChatMediaResource;
@@ -143,22 +144,28 @@ public class AgentChatHelper {
                     .build());
             String functionDefinitionKey = requestId;
             try {
-                List<AgentPowerFunctionDefinition> functions = CompletableFuture.supplyAsync(() -> {
+                String functionsContent = CompletableFuture.supplyAsync(() -> {
                     Object f;
                     while ((f = FUNCTIONS_CACHE.remove(functionDefinitionKey)) == null) {
                         Unsafe.getUnsafe().park(true, TimeUnit.MILLISECONDS.toNanos(500));
                     }
-                    return (List<AgentPowerFunctionDefinition>) f;
+                    return (String) f;
                 }).get(30, TimeUnit.SECONDS);
+                AgentPowerServer.FunctionListResult functionListResult = JSON.parseObject(functionsContent, AgentPowerServer.FunctionListResult.class);
+                if (StringUtils.isNotBlank(functionListResult.errorInfo())) {
+                    // 获取失败
+                    throw new IllegalStateException("函数列表获取失败：" + functionListResult.errorInfo());
+                }
+                List<AgentPowerFunctionDefinition> functions = functionListResult.functions();
                 return functions.stream().collect(Collectors.toMap(AgentPowerFunctionDefinition::functionName, func -> func, (o1, o2) -> o2));
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 FUNCTIONS_CACHE.put(functionDefinitionKey, StatusCode.REQUEST_ABORT);
                 throw new RuntimeException(e);
             }
         }
-        public static int receiveFunctionList(String requestId, List<? extends AgentPowerFunctionDefinition> functions) {
+        public static int receiveFunctionList(String requestId, String content) {
             String functionDefinitionKey = requestId;
-            Object old = FUNCTIONS_CACHE.put(functionDefinitionKey, functions);
+            Object old = FUNCTIONS_CACHE.put(functionDefinitionKey, content);
             if (old instanceof Integer abort) {
                 FUNCTIONS_CACHE.remove(functionDefinitionKey);
                 return abort;

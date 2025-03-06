@@ -21,7 +21,7 @@ import java.util.List;
 
 @Configuration
 @EnableConfigurationProperties({
-        AgentPowerProperties.class
+        AgentPowerServerProperties.class
 })
 public class AgentPowerConfigurations {
 

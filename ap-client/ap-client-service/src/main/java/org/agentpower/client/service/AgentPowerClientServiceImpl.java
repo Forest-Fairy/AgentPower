@@ -8,6 +8,7 @@ import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.infrastructure.AgentPowerFunction;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.resolution.SpringBeanToolCallbackResolver;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.stereotype.Service;
@@ -29,10 +30,12 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
 
     public void addTool(String toolName, Object function) {
         if (function instanceof AgentPowerFunction func) {
-            val old = beansOfType.put(toolName, func);
-            if (old != null) {
-                beansOfType.put(toolName, old);
-                throw new IllegalArgumentException("工具已存在，请先卸载：" + toolName);
+            synchronized (beansOfType) {
+                val old = beansOfType.put(toolName, func);
+                beansOfType.put(toolName, old != null ? old : func);
+                if (old != null) {
+                    throw new IllegalArgumentException("工具已存在，请先卸载：" + toolName);
+                }
             }
         } else {
             Objects.requireNonNull(function, "工具对象不存在，请检查代码逻辑");
@@ -45,6 +48,10 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
         if (old == null) {
             throw new IllegalArgumentException("工具不存在，请先添加：" + toolName);
         }
+    }
+
+    public void refreshResolver() {
+        toolCallbackResolver = SpringBeanToolCallbackResolver.builder().applicationContext(applicationContext).build();
     }
 
     @Override
@@ -81,13 +88,10 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
     public List<? extends AgentPowerFunctionDefinition> listFunctions() {
         return beansOfType.keySet().stream().map(toolCallbackResolver::resolve)
                 .filter(Objects::nonNull)
+                .map(ToolCallback::getToolDefinition)
                 .map(func -> new AgentPowerFunctionDefinition.FunctionDefinition(
-                        func.getName(), func.getDescription(), func.getInputTypeSchema()))
+                        func.name(), func.description(), func.inputSchema()))
                 .toList();
-    }
-
-    public void refreshResolver() {
-        toolCallbackResolver = SpringBeanToolCallbackResolver.builder().applicationContext(applicationContext).build();
     }
 
 //        return functionMap

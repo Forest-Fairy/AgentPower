@@ -12,12 +12,12 @@ import java.util.List;
 @Service
 public class AgentPowerServerImpl implements AgentPowerServer {
     @Override
-    public int sendCallResult(String requestId, String functionName, String callResult) {
-        return AgentPowerToolCallback.receiveCallResult(requestId, functionName, callResult);
+    public int sendCallResult(String requestId, String functionName, String content) {
+        return AgentPowerToolCallback.receiveCallResult(requestId, functionName, content);
     }
 
     @Override
-    public int sendFunctionList(String requestId, String clientServiceId, List<? extends AgentPowerFunctionDefinition> functions) {
-        return AgentChatHelper.Prompt.receiveFunctionList(requestId, functions);
+    public int sendFunctionList(String requestId, String content) {
+        return AgentChatHelper.Prompt.receiveFunctionList(requestId, content);
     }
 }
