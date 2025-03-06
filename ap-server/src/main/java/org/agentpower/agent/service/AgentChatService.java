@@ -114,41 +114,41 @@ public class AgentChatService {
     }
 
     private void graph(ChatClient.AdvisorSpec advisorSpec, ChatMessageModel messageModel) {
-        Optional.ofNullable(messageModel.getKnowledgeBaseId()).filter(StringUtils::isNotBlank)
-                .ifPresent(knowledgeBaseId -> {
-                    String promptWithContext = """
-                            以下可能有可供参考的信息
-                            ---start---
-                            {question_answer_context}
-                            ---end---
-                            """;
-                    advisorSpec.advisors(new QuestionAnswerAdvisor(
-                            vectorStore,
-                            SearchRequest.builder()
-                                    .filterExpression(new Filter.Expression(
-                                            Filter.ExpressionType.EQ,
-                                            new Filter.Key("knowledgeBaseId"),
-                                            new Filter.Value(knowledgeBaseId)))
-                                    .build(),
-                            promptWithContext));
-                });
+//        Optional.ofNullable(messageModel.getKnowledgeBaseId()).filter(StringUtils::isNotBlank)
+//                .ifPresent(knowledgeBaseId -> {
+//                    String promptWithContext = """
+//                            以下可能有可供参考的信息
+//                            ---start---
+//                            {question_answer_context}
+//                            ---end---
+//                            """;
+//                    advisorSpec.advisors(new QuestionAnswerAdvisor(
+//                            vectorStore,
+//                            SearchRequest.builder()
+//                                    .filterExpression(new Filter.Expression(
+//                                            Filter.ExpressionType.EQ,
+//                                            new Filter.Key("knowledgeBaseId"),
+//                                            new Filter.Value(knowledgeBaseId)))
+//                                    .build(),
+//                            promptWithContext));
+//                });
 
-        EmbeddingModel
-        List<Double> embed = ChunkController.floatsToDoubles(embeddingModel.embed(query));
-        String result = neo4jClient.query("""
-                        CALL db.index.vector.queryNodes('form_10k_chunks', 1, $embedding)
-                        yield node, score
-                        match window=(:Chunk)-[:NEXT*0..1]->(node)-[:NEXT*0..1]->(:Chunk)
-                        with nodes(window) as chunkList, node, score
-                        unwind chunkList as chunkRows
-                        with collect(chunkRows.text) as textList, node, score
-                        return apoc.text.join(textList, " \\n ")
-                        """)
-                .bind(embed).to("embedding")
-                .fetchAs(String.class).first()
-                .orElseThrow(() -> new BusinessException("未找到相似文档"));
-        String content = promptTemplate.createMessage(Map.of("question_answer_context", result)).getContent();
-        return chatModel.call(new UserMessage(content + "\n" + query));
+//        EmbeddingModel
+//        List<Double> embed = ChunkController.floatsToDoubles(embeddingModel.embed(query));
+//        String result = neo4jClient.query("""
+//                        CALL db.index.vector.queryNodes('form_10k_chunks', 1, $embedding)
+//                        yield node, score
+//                        match window=(:Chunk)-[:NEXT*0..1]->(node)-[:NEXT*0..1]->(:Chunk)
+//                        with nodes(window) as chunkList, node, score
+//                        unwind chunkList as chunkRows
+//                        with collect(chunkRows.text) as textList, node, score
+//                        return apoc.text.join(textList, " \\n ")
+//                        """)
+//                .bind(embed).to("embedding")
+//                .fetchAs(String.class).first()
+//                .orElseThrow(() -> new BusinessException("未找到相似文档"));
+//        String content = promptTemplate.createMessage(Map.of("question_answer_context", result)).getContent();
+//        return chatModel.call(new UserMessage(content + "\n" + query));
     }
 
 }

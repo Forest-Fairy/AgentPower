@@ -45,7 +45,7 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>${artifactId}</id>
+                        <id>${project.artifactId}</id>
                         <goals>
                             <goal>single</goal>
                         </goals>

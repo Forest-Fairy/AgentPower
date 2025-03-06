@@ -89,15 +89,15 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>dolphinscheduler-tools</id>
+                        <id>${project.artifactId}</id>
                         <goals>
                             <goal>single</goal>
                         </goals>
                         <phase>package</phase>
                         <configuration>
-                            <finalName>tools</finalName>
+                            <finalName>agent-power-server</finalName>
                             <descriptors>
-                                <descriptor>src/main/assembly/dolphinscheduler-tools.xml</descriptor>
+                                <descriptor>src/main/assembly/ap-server.xml</descriptor>
                             </descriptors>
                             <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
