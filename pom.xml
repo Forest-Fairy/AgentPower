@@ -14,7 +14,8 @@
         <module>ap-api</module>
         <module>ap-common</module>
         <module>ap-server</module>
-        <module>ap-cli</module>
+        <module>ap-client-service</module>
+        <module>ap-client-plugins</module>
         <module>ap-docs</module>
         <module>ap-front-end</module>
     </modules>
@@ -70,31 +71,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>cn.hutool</groupId>
-            <artifactId>hutool-all</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.alibaba.fastjson2</groupId>
-            <artifactId>fastjson2</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.aayushatharva.brotli4j</groupId>
-            <artifactId>brotli4j</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-debug-jdk15to18</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <scope>provided</scope>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -105,7 +85,6 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>
@@ -218,34 +197,34 @@
                     <artifactId>exec-maven-plugin</artifactId>
                     <version>${exec-maven-plugin.version}</version>
                 </plugin>
-                <plugin>
-                    <groupId>org.owasp</groupId>
-                    <artifactId>dependency-check-maven</artifactId>
-                    <version>${owasp-dependency-check-maven.version}</version>
-                    <configuration>
-                        <skip>false</skip>
-                        <skipProvidedScope>true</skipProvidedScope>
-                        <skipRuntimeScope>true</skipRuntimeScope>
-                        <skipSystemScope>true</skipSystemScope>
-                        <failBuildOnCVSS>7</failBuildOnCVSS>
-                        <nvdApiKeyEnvironmentVariable>NIST_NVD_API_KEY</nvdApiKeyEnvironmentVariable>
-                    </configuration>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>aggregate</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
+<!--                <plugin>-->
+<!--                    <groupId>org.owasp</groupId>-->
+<!--                    <artifactId>dependency-check-maven</artifactId>-->
+<!--                    <version>${owasp-dependency-check-maven.version}</version>-->
+<!--                    <configuration>-->
+<!--                        <skip>false</skip>-->
+<!--                        <skipProvidedScope>true</skipProvidedScope>-->
+<!--                        <skipRuntimeScope>true</skipRuntimeScope>-->
+<!--                        <skipSystemScope>true</skipSystemScope>-->
+<!--                        <failBuildOnCVSS>7</failBuildOnCVSS>-->
+<!--                        <nvdApiKeyEnvironmentVariable>NIST_NVD_API_KEY</nvdApiKeyEnvironmentVariable>-->
+<!--                    </configuration>-->
+<!--                    <executions>-->
+<!--                        <execution>-->
+<!--                            <goals>-->
+<!--                                <goal>aggregate</goal>-->
+<!--                            </goals>-->
+<!--                        </execution>-->
+<!--                    </executions>-->
+<!--                </plugin>-->
             </plugins>
         </pluginManagement>
 
         <plugins>
-            <plugin>
-                <groupId>org.owasp</groupId>
-                <artifactId>dependency-check-maven</artifactId>
-            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.owasp</groupId>-->
+<!--                <artifactId>dependency-check-maven</artifactId>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>

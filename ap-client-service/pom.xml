@@ -5,16 +5,21 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.agentpower</groupId>
-        <artifactId>ap-cli</artifactId>
+        <artifactId>AgentPower</artifactId>
         <version>${revision}</version>
     </parent>
 
-    <artifactId>ap-cli-service</artifactId>
+    <artifactId>ap-client-service</artifactId>
 
     <properties>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.agentpower</groupId>
+            <artifactId>ap-common</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>

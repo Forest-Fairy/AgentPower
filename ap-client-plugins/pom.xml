@@ -9,32 +9,20 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>ap-cli</artifactId>
+    <artifactId>ap-client-plugins</artifactId>
     <packaging>pom</packaging>
-
     <modules>
-        <module>ap-cli-service</module>
-        <module>ap-cli-plugins</module>
+        <module>ap-client-plugin-file-reader</module>
     </modules>
 
     <properties>
     </properties>
-
     <dependencies>
         <dependency>
             <groupId>org.agentpower</groupId>
-            <artifactId>ap-api</artifactId>
+            <artifactId>ap-client-service</artifactId>
             <version>${revision}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.agentpower</groupId>
-            <artifactId>ap-common</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

@@ -5,14 +5,22 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.agentpower</groupId>
-        <artifactId>ap-cli-plugins</artifactId>
+        <artifactId>ap-client-plugins</artifactId>
         <version>${revision}</version>
     </parent>
 
-    <artifactId>ap-cli-plugin-file-reader</artifactId>
+    <artifactId>ap-client-plugin-file-reader</artifactId>
 
     <properties>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.1.0</version>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>

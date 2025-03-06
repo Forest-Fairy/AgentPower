@@ -11,7 +11,34 @@
 
     <artifactId>ap-common</artifactId>
 
-    <properties>
-    </properties>
+    <properties/>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.agentpower</groupId>
+            <artifactId>ap-api</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.aayushatharva.brotli4j</groupId>
+            <artifactId>brotli4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-debug-jdk15to18</artifactId>
+        </dependency>
+    </dependencies>
 
 </project>

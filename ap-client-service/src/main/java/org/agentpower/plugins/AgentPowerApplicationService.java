@@ -230,6 +230,9 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
         val jarFileName = jarFile.getName();
         val existJarInfo = PLUGIN_MAP.get(jarFileName);
         if (existJarInfo != null) {
+            // TODO 这里一般都是同个文件 因为文件被占用是没法操作的
+            //      后续可以尝试进行分离 将安装的插件存储到其他目录下
+            //      但是应该没这个必要
             if (jarFile.length() == existJarInfo.t2()) {
                 return;
             }
