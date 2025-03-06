@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.agentpower</groupId>
+        <artifactId>ap-client</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>ap-client-plugins</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>ap-client-plugin-file-reader</module>
+    </modules>
+
+    <properties>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.agentpower</groupId>
+            <artifactId>ap-client-service</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+
+</project>
