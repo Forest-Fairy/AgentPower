@@ -1,5 +1,6 @@
 package org.agentpower.common;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,7 +11,7 @@ public abstract class Tuples {
             if (objects == null || objects.length == 0) {
                 throw new IllegalArgumentException("empty tuple");
             }
-            this.members = List.of(objects);
+            this.members = Arrays.asList(objects);
         }
         protected <T> T get(int index) {
             // noinspection unchecked

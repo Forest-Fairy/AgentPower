@@ -9,14 +9,14 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import java.security.KeyPair;
 
 @ConfigurationProperties(Constants.CONFIG_PREFIX)
-public class AgentPowerServerProperties {
-    private static AgentPowerServerProperties $SELF;
+public class AgentPowerClientProperties {
+    private static AgentPowerClientProperties $SELF;
     private final Integer port;
     private final String publicKey;
     private final String privateKey;
 
 
-    public AgentPowerServerProperties(
+    public AgentPowerClientProperties(
             @Value("${agent-power.server.port}") Integer port,
             @Value("${agent-power.server.public-key}") String publicKey,
             @Value("${agent-power.server.private-key}") String privateKey) {
@@ -31,7 +31,7 @@ public class AgentPowerServerProperties {
             this.privateKey = privateKey;
         }
     }
-
+    
     public static Integer getPort() {
         return $SELF.port;
     }

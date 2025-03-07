@@ -1,10 +1,12 @@
 package org.agentpower.infrastructure;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ConfigurationProperties(prefix = "agent-power")
+@EnableConfigurationProperties({
+        AgentPowerClientProperties.class
+})
 public class AgentPowerAutoConfiguration {
 
 //    @Bean

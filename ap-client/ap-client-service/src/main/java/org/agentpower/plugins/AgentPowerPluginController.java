@@ -14,7 +14,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("plugins")
 @AllArgsConstructor
-public class PluginController {
+public class AgentPowerPluginController {
     private final AgentPowerApplicationService agentPowerApplicationService;
     @RequestMapping("list/installed")
     public List<String> listInstalled() {
@@ -28,20 +28,17 @@ public class PluginController {
 
     @RequestMapping("import")
     public String importPlugin(@RequestPart MultipartFile file) throws IOException {
-        return Optional.ofNullable(agentPowerApplicationService.importPlugin(file.getName(), file.getInputStream()))
-                .orElse("导入成功");
+        return agentPowerApplicationService.importPlugin(file.getName(), file.getInputStream());
     }
 
     @RequestMapping("uninstall")
     public String uninstallPlugin(@RequestParam String jarFileName) {
-        return Optional.ofNullable(agentPowerApplicationService.uninstallPlugin(jarFileName))
-                .orElse("卸载成功");
+        return agentPowerApplicationService.uninstallPlugin(jarFileName);
     }
 
     @RequestMapping("restore")
     public String restorePlugin(@RequestParam String jarFileName) {
-        return Optional.ofNullable(agentPowerApplicationService.restorePlugin(jarFileName))
-                .orElse("还原成功");
+        return agentPowerApplicationService.restorePlugin(jarFileName);
     }
 
 

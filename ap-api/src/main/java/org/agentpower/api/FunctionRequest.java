@@ -9,7 +9,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class FunctionRequest {
     private String requestId;
-    private String functionName;
     private String eventType;
     private Map<String, Object> params;
 

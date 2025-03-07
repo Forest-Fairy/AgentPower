@@ -127,21 +127,17 @@ public class AgentChatHelper {
                 // 从缓存获取到了 如果是空集合 表示客户端没有智能体函数
                 return functionMap;
             }
-            Globals.Client.sendMessage(requestId, ServerSentEvent.builder()
-                    .event(FunctionRequest.Event.LIST_FUNCTIONS)
-                    .data(JSON.toJSONString(
+            Globals.Client.sendMessage(requestId, FunctionRequest.Event.LIST_FUNCTIONS,
+                    JSON.toJSONString(
                             new FunctionRequest(
                                     requestId,
-                                    null,
                                     FunctionRequest.Event.LIST_FUNCTIONS,
                                     Map.of(
                                             "configurationId", clientServiceConfiguration.getId(),
                                             "serviceUrl", clientServiceConfiguration.getServiceUrl(),
                                             "headers", clientServiceConfiguration.getHeaders(),
-                                            "auth", RSAUtil.encrypt("RSA", userId,
-                                                    clientServiceConfiguration.getServicePublicKey()))
-                            )))
-                    .build());
+                                            "auth", clientServiceConfiguration.generateAuthorization(userId))
+                            )));
             String functionDefinitionKey = requestId;
             try {
                 String functionsContent = CompletableFuture.supplyAsync(() -> {

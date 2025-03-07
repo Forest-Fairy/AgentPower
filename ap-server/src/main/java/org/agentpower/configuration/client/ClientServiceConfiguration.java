@@ -8,6 +8,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.agentpower.api.Constants;
+import org.agentpower.common.RSAUtil;
 
 /**
  * 用户客户端服务配置
@@ -34,4 +36,8 @@ public class ClientServiceConfiguration {
     private String createdBy;
     private String updatedTime;
     private String updatedBy;
+
+    public String generateAuthorization(String userId) {
+        return RSAUtil.encrypt(RSAUtil.ALGORITHM, Constants.CONFIG_PREFIX + userId, servicePublicKey);
+    }
 }

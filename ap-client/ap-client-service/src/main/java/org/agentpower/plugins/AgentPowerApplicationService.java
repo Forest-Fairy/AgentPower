@@ -38,10 +38,11 @@ import java.util.jar.JarInputStream;
 @Component
 public class AgentPowerApplicationService implements ApplicationListener<ApplicationContextInitializedEvent> {
     private static final Logger log = LoggerFactory.getLogger(AgentPowerApplicationService.class);
-    private static final Map<String, PluginState> PLUGIN_STATUS_LOCK = new ConcurrentHashMap<>();
-    private static final Map<String, Tuples._3<URLClassLoader, List<String>, Long>> PLUGIN_MAP = new ConcurrentHashMap<>();
+    private static final Map<String, Tuples._2<PluginState, Tuples._3<URLClassLoader, List<String>, Long>>>
+            PLUGIN_INFO_MAP = new HashMap<>();
     private static final File PLUGIN_DIR = new File("./plugins");
     private static final File TMP_DIR = new File(PLUGIN_DIR, "tmp");
+    private static final File INVALID_DIR = new File(PLUGIN_DIR, "invalid");
     private static final File UNINSTALLED_DIR = Optional.of(new File("uninstalled"))
             .map(file -> {
                 if (!file.exists()) {
@@ -70,7 +71,9 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
      * @return 插件包
      */
     public List<String> listInstalledPlugins() {
-        return List.copyOf(PLUGIN_MAP.keySet());
+        return PLUGIN_INFO_MAP.entrySet().stream()
+                .filter(entry -> entry.getValue().t0() == PluginState.USING)
+                .map(Map.Entry::getKey).toList();
     }
 
     /**
@@ -93,29 +96,24 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
      * @return 错误信息
      */
     public String importPlugin(String jarFileName, InputStream inputStream) {
-        PluginState pluginState = PLUGIN_STATUS_LOCK.get(jarFileName);
-        if (pluginState != null) {
-            return "操作失败，插件包正在" + pluginState.message;
+        if (jarFileName.replace("\\", "/").indexOf("/") > 0) {
+            return "操作失败，插件包名不能包含路径";
         }
-        if (PLUGIN_MAP.containsKey(jarFileName)) {
-            return "导入失败，插件包已存在，请先卸载";
+        synchronized (PLUGIN_INFO_MAP) {
+            Tuples._2<PluginState, Tuples._3<URLClassLoader, List<String>, Long>>
+                    pluginInfo = PLUGIN_INFO_MAP.get(jarFileName);
+            if (pluginInfo != null) {
+                return pluginInfo.t0().toString();
+            }
+            PLUGIN_INFO_MAP.put(jarFileName, new Tuples._2<>(PluginState.WAITING, null));
         }
         try {
             File targetFile = new File(PLUGIN_DIR, jarFileName);
             if (targetFile.exists()) {
-                // 卸载
-                FileInputStream fis = new FileInputStream(targetFile);
-                try (FileLock lock = fis.getChannel().lock()) {
-                    // 当拿到这把锁的时候 有两种情况 一种是插件已安装 一种是插件还未被检测到 未安装
-                    if (PLUGIN_MAP.containsKey(jarFileName)) {
-                        // 插件已安装 提示先卸载
-                        return "导入失败，插件包已存在，请先卸载";
-                    }
-                    // 插件未被安装 直接删除文件
-                    fis.getChannel().truncate(0);
+                if (! targetFile.delete()) {
+                    return "导入失败，路径已存在同名插件包，系统无法删除，请手动删除";
                 }
             }
-            targetFile.delete();
             FileUtil.writeFromStream(inputStream, targetFile);
         } catch (Exception e) {
             return "导入失败，写入文件出错：" + e.getMessage();
@@ -129,13 +127,13 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
      * @return 错误信息
      */
     public String uninstallPlugin(String jarFileName) {
-        PluginState pluginState = PLUGIN_STATUS_LOCK.get(jarFileName);
-        if (pluginState != null) {
-            return "操作失败，插件包正在" + pluginState.message;
+        if (jarFileName.replace("\\", "/").indexOf("/") > 0) {
+            return "操作失败，插件包名不能包含路径";
         }
         try {
             removeToolJar(jarFileName);
         } catch (Exception e) {
+            logError(e, "插件 {} 卸载出错 {}", jarFileName, e.getMessage());
             return "卸载失败，卸载出错：" + e.getMessage();
         }
         return null;
@@ -147,9 +145,13 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
      * @return 错误信息
      */
     public String restorePlugin(String jarFileName) {
-        PluginState pluginState = PLUGIN_STATUS_LOCK.get(jarFileName);
-        if (pluginState != null) {
-            return "操作失败，插件包正在" + pluginState.message;
+        synchronized (PLUGIN_INFO_MAP) {
+            Tuples._2<PluginState, Tuples._3<URLClassLoader, List<String>, Long>>
+                    pluginInfo = PLUGIN_INFO_MAP.get(jarFileName);
+            if (pluginInfo != null) {
+                return pluginInfo.t0().toString();
+            }
+            PLUGIN_INFO_MAP.put(jarFileName, new Tuples._2<>(PluginState.WAITING, null));
         }
         try {
             // 复制插件包到tmp目录
@@ -168,6 +170,7 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
             }
             tmpFile.renameTo(pluginFile);
         } catch (Exception e) {
+            logError(e, "插件 {} 还原出错 {}", jarFileName, e.getMessage());
             return "还原失败，还原出错：" + e.getMessage();
         }
         return null;
@@ -190,12 +193,6 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
         }
         // 2 监听 plugin 目录
         startWatch();
-
-        // TODO 插件自动安装与卸载
-        //  2 提供jar的卸载方法
-        //      卸载时通过jar文件名卸载
-        //      卸载时先获取到相关的bean 调用 clientService 的 removeTool 方法
-        //      最终关闭jar包的类加载器，并将jar迁移到 uninstalled 目录下
     }
 
     private void startWatch() {
@@ -228,16 +225,22 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
      */
     private void compareAndUpdate(File jarFile) {
         val jarFileName = jarFile.getName();
-        val existJarInfo = PLUGIN_MAP.get(jarFileName);
-        if (existJarInfo != null) {
-            // TODO 这里一般都是同个文件 因为文件被占用是没法操作的
-            //      后续可以尝试进行分离 将安装的插件存储到其他目录下
-            //      但是应该没这个必要
-            if (jarFile.length() == existJarInfo.t2()) {
+        val pluginInfo = PLUGIN_INFO_MAP.get(jarFileName);
+        if (pluginInfo != null) {
+            PluginState state = pluginInfo.t0();
+            if (! state.equals(PluginState.USING) &&
+                    ! state.equals(PluginState.WAITING)) {
+                // 存在操作中的插件，跳过
                 return;
             }
-            // 卸载插件
-            removeToolJar(jarFileName);
+            if (state.equals(PluginState.USING)) {
+                if (jarFile.length() == pluginInfo.t1().t2()) {
+                    // 文件大小相同，跳过
+                    return;
+                }
+                // 卸载插件
+                removeToolJar(jarFileName);
+            }
         }
         // 安装插件
         addToolJar(jarFileName);
@@ -252,59 +255,72 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
     private void addToolJar(String toolJarPath) {
         try {
             val file = new File(toolJarPath);
-            FileInputStream fis = new FileInputStream(file);
-            try (FileLock lock = fis.getChannel().lock()) {
-                List<String> loadedClassNames = this.getClassNamesInJar(fis);
-                if (CollectionUtils.isEmpty(loadedClassNames)) {
-                    throw new IllegalStateException(toolJarPath + " jar包中未找到任何类");
-                }
-                URL[] urls = {file.toURI().toURL()};
-                URLClassLoader classLoader = new URLClassLoader(urls, this.getClass().getClassLoader());
-                Tuples._3<URLClassLoader, List<String>, Long> jarInfo = new Tuples._3<>(classLoader, new LinkedList<>(), file.length());
-                Optional.ofNullable(PLUGIN_MAP.put(toolJarPath, jarInfo))
-                        .ifPresent(existJar -> {
-                            throw new IllegalStateException(" 插件已存在");
-                        });
-                Map<String, Class<?>> springClasses = getSpringBeanClassesToRegister(loadedClassNames, classLoader);
-                // noinspection SynchronizationOnLocalVariableOrMethodParameter
-                synchronized (jarInfo) {
-                    registerBeans(jarInfo.t1(), springClasses);
-                }
+            List<String> loadedClassNames = this.getClassNamesInJar(file);
+            if (CollectionUtils.isEmpty(loadedClassNames)) {
+                throw new IllegalStateException(toolJarPath + " jar包中未找到任何类");
             }
+            URL[] urls = {file.toURI().toURL()};
+            URLClassLoader classLoader = new URLClassLoader(urls, this.getClass().getClassLoader());
+            Tuples._3<URLClassLoader, List<String>, Long> jarInfo = new Tuples._3<>(
+                    classLoader, new LinkedList<>(), file.length());
+            // 更新信息 出错时可以卸载
+            PLUGIN_INFO_MAP.put(toolJarPath, new Tuples._2<>(PluginState.IMPORTING, jarInfo));
+            Map<String, Class<?>> springClasses = getSpringBeanClassesToRegister(loadedClassNames, classLoader);
+            registerBeans(jarInfo.t1(), springClasses);
+            // 更新状态 标记为使用中
+            PLUGIN_INFO_MAP.put(toolJarPath, new Tuples._2<>(PluginState.USING, jarInfo));
         } catch (Exception e) {
             logError(e, "插件jar包 {} 安装出错：{}", toolJarPath, e.getMessage());
-            removeToolJar(toolJarPath);
+            boolean doRemove = false;
+            synchronized (PLUGIN_INFO_MAP) {
+                Tuples._2<PluginState, Tuples._3<URLClassLoader, List<String>, Long>>
+                        pluginInfo = PLUGIN_INFO_MAP.get(toolJarPath);
+                if (pluginInfo != null && pluginInfo.t1() != null
+                        && pluginInfo.t0().equals(PluginState.IMPORTING)) {
+                    doRemove = true;
+                }
+            }
+            if (doRemove) {
+                removeToolJar(toolJarPath);
+            }
         }
     }
 
     /**
      * 卸载jar插件
+     *      卸载时通过jar文件名卸载
+     *      卸载时先获取到相关的bean 如果是函数则调用 clientService 的 removeTool 方法
+     *      然后卸载所有的bean对象，关闭jar包的类加载器，并将jar包迁移到 uninstalled 目录下
      * @param toolJarPath jar包路径
      */
     private void removeToolJar(String toolJarPath) {
-        Optional.ofNullable(PLUGIN_MAP.get(toolJarPath))
-                .ifPresent(jarInfo -> {
-                    // noinspection SynchronizationOnLocalVariableOrMethodParameter
-                    synchronized (jarInfo) {
-                        PLUGIN_STATUS_LOCK.put(toolJarPath, PluginState.UNINSTALLING);
-                        URLClassLoader classLoader = jarInfo.t0();
-                        try {
-                            unregisterBeans(jarInfo.t1());
-                        } catch (Exception e) {
-                            logError(e, "卸载插件出错： {}", e.getMessage());
-                        } finally {
-                            PLUGIN_MAP.remove(toolJarPath);
-                            try {
-                                classLoader.close();
-                            } catch (IOException e) {
-                                logError(e, "卸载插件出错： {}", e.getMessage());
-                            }
-                            // 将文件迁移到uninstalled目录下
-                            moveToUninstalled(toolJarPath);
-                            PLUGIN_STATUS_LOCK.remove(toolJarPath);
-                        }
-                    }
-                });
+        Tuples._2<PluginState, Tuples._3<URLClassLoader, List<String>, Long>> pluginInfo;
+        synchronized (PLUGIN_INFO_MAP) {
+            pluginInfo = PLUGIN_INFO_MAP.get(toolJarPath);
+            if (pluginInfo == null
+                    // 仅使用中或导入失败可执行该方法
+                    || !pluginInfo.t0().equals(PluginState.USING)
+                    || !pluginInfo.t0().equals(PluginState.IMPORT_FAILED)) {
+                throw new IllegalStateException(pluginInfo == null ? "卸载失败，插件未安装" : pluginInfo.t0().toString());
+            }
+            PLUGIN_INFO_MAP.put(toolJarPath, pluginInfo = new Tuples._2<>(PluginState.UNINSTALLING, pluginInfo.t1()));
+        }
+        Tuples._3<URLClassLoader, List<String>, Long> jarInfo = pluginInfo.t1();
+        URLClassLoader classLoader = jarInfo.t0();
+        try {
+            unregisterBeans(jarInfo.t1());
+        } catch (Exception e) {
+            logError(e, "卸载插件出错： {}", e.getMessage());
+        } finally {
+            try {
+                classLoader.close();
+            } catch (IOException e) {
+                logError(e, "卸载插件出错： {}", e.getMessage());
+            }
+            // 将文件迁移到uninstalled目录下
+            moveToUninstalled(toolJarPath);
+            PLUGIN_INFO_MAP.remove(toolJarPath);
+        }
     }
 
     private void moveToUninstalled(String toolJarPath) {
@@ -349,24 +365,26 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
         return springClasses;
     }
 
-    private List<String> getClassNamesInJar(InputStream is) throws IOException {
-        List<String> classPathList = new LinkedList<>();
-        // 获取jar的流,打开jar文件
-        try (JarInputStream jarInputStream = new JarInputStream(is)){
-            //逐个获取jar种文件
-            JarEntry jarEntry = jarInputStream.getNextJarEntry();
-            //遍历
-            while (jarEntry != null){
-                //获取文件路径
-                String name = jarEntry.getName();
-                if (name.endsWith(".class")){
-                    String classNamePath = name.replace(".class", "").replace("/",".");
-                    classPathList.add(classNamePath);
+    private List<String> getClassNamesInJar(File file) throws IOException {
+        try (FileInputStream is = new FileInputStream(file)) {
+            List<String> classPathList = new LinkedList<>();
+            // 获取jar的流,打开jar文件
+            try (JarInputStream jarInputStream = new JarInputStream(is)){
+                //逐个获取jar种文件
+                JarEntry jarEntry = jarInputStream.getNextJarEntry();
+                //遍历
+                while (jarEntry != null){
+                    //获取文件路径
+                    String name = jarEntry.getName();
+                    if (name.endsWith(".class")){
+                        String classNamePath = name.replace(".class", "").replace("/",".");
+                        classPathList.add(classNamePath);
+                    }
+                    jarEntry = jarInputStream.getNextJarEntry();
                 }
-                jarEntry = jarInputStream.getNextJarEntry();
             }
+            return classPathList;
         }
-        return classPathList;
     }
 
 
@@ -464,13 +482,22 @@ public class AgentPowerApplicationService implements ApplicationListener<Applica
     }
 
     private enum PluginState {
-        IMPORTING("导入中"),
-        UNINSTALLING("卸载中"),
-        RESTORING("还原中"),
+        WAITING("等待导入中", "请稍后重试"),
+        IMPORTING("导入中", "请稍后重试"),
+        UNINSTALLING("卸载中", "请稍后重试"),
+        RESTORING("还原中", "请稍后重试"),
+        USING("使用中", "请卸载重试"),
+        IMPORT_FAILED("导入失败", "请稍后重试"),
         ;
         private final String message;
-        PluginState(String message) {
+        private final String tips;
+        PluginState(String message, String tips) {
             this.message = message;
+            this.tips = tips;
+        }
+        @Override
+        public String toString() {
+            return String.format("插件正在%s，%s", message, tips);
         }
     }
 }

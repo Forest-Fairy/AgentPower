@@ -66,7 +66,7 @@ public class AgentPowerToolCallback implements ToolCallback {
     private static final Map<String, Object> CALL_RESULT_CACHE =  new ConcurrentHashMap<>();
 
     private FunctionRequest.CallResult callClientFunction(String toolInput) {
-        Globals.Client.sendMessage(requestId, buildEvent(
+        Globals.Client.sendMessage(requestId, FunctionRequest.Event.FUNC_CALL, buildEventData(
                 requestId, loginUserId, FunctionRequest.Event.FUNC_CALL,
                 toolDefinition.name(), clientServiceConfiguration, toolInput));
         String functionDefinitionKey = wrapFunctionDefinitionKey(requestId, toolDefinition.name());
@@ -109,23 +109,20 @@ public class AgentPowerToolCallback implements ToolCallback {
     private static String wrapFunctionDefinitionKey(String requestId, String functionName) {
         return requestId + "_" + functionName;
     }
-    private static ServerSentEvent<?> buildEvent(
-            String requestId, String loginUserId, String eventType, String functionName,
+    private static String buildEventData(
+            String requestId, String loginUserId, String eventType, String toolName,
             ClientServiceConfiguration clientServiceConfiguration, String toolParams) {
-        return ServerSentEvent.builder()
-                .event(eventType)
-                .data(JSON.toJSONString(
-                        new FunctionRequest(
-                                requestId,
-                                functionName,
-                                eventType,
-                                Map.of(
-                                        "configurationId", clientServiceConfiguration.getId(),
-                                        "serviceUrl", clientServiceConfiguration.getServiceUrl(),
-                                        "headers", clientServiceConfiguration.getHeaders(),
-                                        "auth", RSAUtil.encrypt("RSA", loginUserId, clientServiceConfiguration.getServicePublicKey()),
-                                        "toolParams", toolParams)
-                        )))
-                .build();
+        return JSON.toJSONString(
+                new FunctionRequest(
+                        requestId,
+                        eventType,
+                        Map.of(
+                                "configurationId", clientServiceConfiguration.getId(),
+                                "serviceUrl", clientServiceConfiguration.getServiceUrl(),
+                                "headers", clientServiceConfiguration.getHeaders(),
+                                "auth", clientServiceConfiguration.generateAuthorization(loginUserId),
+                                "toolName", toolName,
+                                "toolParams", toolParams)
+                ));
     }
 }
