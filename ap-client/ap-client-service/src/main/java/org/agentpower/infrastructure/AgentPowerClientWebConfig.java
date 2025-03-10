@@ -3,10 +3,10 @@ package org.agentpower.infrastructure;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-import org.agentpower.api.secure.decode.InputDecodeHandler;
-import org.agentpower.api.secure.decode.InputDecodeRequired;
-import org.agentpower.api.secure.encode.OutputEncodeHandler;
-import org.agentpower.api.secure.encode.OutputEncodeRequired;
+import org.agentpower.service.secure.decode.InputDecodeHandler;
+import org.agentpower.service.secure.decode.InputDecodeRequired;
+import org.agentpower.service.secure.encode.OutputEncodeHandler;
+import org.agentpower.service.secure.encode.OutputEncodeRequired;
 import org.agentpower.common.RSAUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotationUtils;
@@ -30,9 +30,8 @@ public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConf
     private final AgentPowerAutoConfiguration configuration;
 
     @Override
-    public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
         // TODO 需要校验是否可行
-        Map<String, String[]> parameterMap = request.getParameterMap();
         if (handler instanceof HandlerMethod handlerMethod) {
             // 获取目标方法上的目标注解（可判断目标方法是否存在该注解）
             InputDecodeRequired decodeRequired = AnnotationUtils.findAnnotation(handlerMethod.getMethod(), InputDecodeRequired.class);
@@ -41,8 +40,7 @@ public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConf
                 decodeRequired = AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), InputDecodeRequired.class);
             }
             if (decodeRequired != null) {
-                Map<String, String[]> decodedParams = decodeHandler.decode(parameterMap, decodeRequired, RSAUtil.ALGORITHM, AgentPowerClientProperties.getPrivateKey());
-                request.getParameterMap().putAll(decodedParams);
+                decodeHandler.decode(request, response, handlerMethod, decodeRequired, AgentPowerClientProperties.getPrivateKey());
             }
         }
         return true;
@@ -61,8 +59,7 @@ public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConf
                     encodeRequired = AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), OutputEncodeRequired.class);
                 }
                 if (encodeRequired != null) {
-                    Map<String, String> decodedParams = encodeHandler.encode(model, encodeRequired, RSAUtil.ALGORITHM, AgentPowerClientProperties.getPublicKey());
-                    model.putAll(decodedParams);
+                    encodeHandler.encode(request, response, handlerMethod, modelAndView, encodeRequired, AgentPowerClientProperties.getPublicKey());
                 }
             }
         }
@@ -83,5 +80,6 @@ public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConf
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         // TODO 添加拦截器 校验请求头
+        registry.addInterceptor(this);
     }
 }

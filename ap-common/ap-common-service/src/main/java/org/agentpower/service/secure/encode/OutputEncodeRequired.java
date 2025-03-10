@@ -1,4 +1,4 @@
-package org.agentpower.api.secure.encode;
+package org.agentpower.service.secure.encode;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

@@ -1,10 +1,9 @@
-package org.agentpower.api.secure.decode;
+package org.agentpower.service.secure.decode;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.util.Map;
 
 /**
  * 定义请求参数中需要解码的字段

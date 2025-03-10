@@ -13,6 +13,10 @@
     <file url="file://$PROJECT_DIR$/ap-client/ap-client-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-client/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-client/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ap-common/ap-common-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ap-common/ap-common-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ap-common/ap-common-utils/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/ap-common/ap-common-utils/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-common/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-common/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/ap-dependencies/src/main/java" charset="UTF-8" />
