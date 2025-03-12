@@ -1,6 +1,9 @@
 agent-power:
-  port: 8848
-  config:
+  client:
+    port: 8848
+    # 定义服务器秘钥公钥 为空则每次启动都自动生成
     private-key: tmp;test;private
     public-key: tmp;test;public
+    # jwt 秘钥
+    jwt-secret: tmp;test;secret
 

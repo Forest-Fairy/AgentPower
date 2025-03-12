@@ -2,5 +2,7 @@ agent-power:
   server:
     port: 8845
     # 定义服务器秘钥公钥 为空则每次都自动生成
-    private-key:
-    publick-key:
+    private-key: 1
+    public-key: 1
+    # jwt 秘钥
+    jwt-secret: 1

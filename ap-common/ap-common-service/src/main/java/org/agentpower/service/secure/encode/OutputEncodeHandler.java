@@ -48,7 +48,8 @@ public class OutputEncodeHandler {
             if (ArrayUtil.isEmpty(o)) {
                 continue;
             }
-            result.put(mapping.getValue(), RSAUtil.encrypt(RSAUtil.ALGORITHM, JSON.toJSONString(o), publicKey));
+            result.put(mapping.getValue(), RSAUtil.encrypt(JSON.toJSONString(o),
+                    RSAUtil.generatePublicKey(RSAUtil.ALGORITHM, publicKey)));
         }
         modelAndView.getModelMap().putAll(result);
     }

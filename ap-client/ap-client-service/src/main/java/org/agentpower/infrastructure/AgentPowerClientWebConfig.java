@@ -7,7 +7,6 @@ import org.agentpower.service.secure.decode.InputDecodeHandler;
 import org.agentpower.service.secure.decode.InputDecodeRequired;
 import org.agentpower.service.secure.encode.OutputEncodeHandler;
 import org.agentpower.service.secure.encode.OutputEncodeRequired;
-import org.agentpower.common.RSAUtil;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.NonNull;
@@ -27,7 +26,7 @@ public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConf
 
     private final InputDecodeHandler decodeHandler;
     private final OutputEncodeHandler encodeHandler;
-    private final AgentPowerAutoConfiguration configuration;
+    private final AgentPowerClientConfigurations configuration;
 
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {

@@ -1,5 +1,5 @@
 server:
-  port: ${agent-power.port:8845}
+  port: ${agent-power.config.port:8845}
 spring:
   application:
     name: agent-power-client-service
