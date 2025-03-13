@@ -2,7 +2,6 @@ package org.agentpower.common;
 
 import cn.hutool.jwt.JWT;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
 
@@ -32,23 +31,32 @@ public class JwtUtil {
     }
 
     /**
-     * 解密JWT，如果秘钥错误，或者JWT被修改过，会直接抛出异常信息
-     *
-     * @param jwt           JWT字符串信息
-     * @param secretKey     秘钥
+     * 解析JWT
+     * @param jwtToken JWT字符串信息
      * @return 返回JWT载荷信息
      */
-    public static JWT parseJWT(String jwt, byte[] secretKey) {
-        return JWT.of(jwt).setKey(secretKey);
+    public static JWT parseJWT(String jwtToken) {
+        return JWT.of(jwtToken);
+    }
+
+    /**
+     * 校验jwt有效性
+     * @param jwt JWT字符串信息
+     * @param secret 秘钥
+     * @return verify
+     */
+    public static boolean isValid(JWT jwt, byte[] secret) {
+        return jwt.setKey(secret).verify();
     }
 
     /**
      * 判断jwt是否已经过期
      *
      * @param jwt JWT字符串信息
+     * @param leeway 允许的误差时间，单位是秒
      * @return 如果jwt已经过期，返回true，否则返回false
      */
-    public static boolean isExpiration(String jwt) {
-        return JWT.of(jwt).validate(0);
+    public static boolean isExpired(JWT jwt, long leeway) {
+        return jwt.validate(leeway);
     }
 }

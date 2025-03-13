@@ -3,10 +3,10 @@ package org.agentpower.infrastructure;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
-import org.agentpower.service.secure.decode.InputDecodeHandler;
-import org.agentpower.service.secure.decode.InputDecodeRequired;
-import org.agentpower.service.secure.encode.OutputEncodeHandler;
-import org.agentpower.service.secure.encode.OutputEncodeRequired;
+import org.agentpower.service.secure.codec.InputDecodeHandler;
+import org.agentpower.service.secure.codec.InputDecodeRequired;
+import org.agentpower.service.secure.codec.OutputEncodeHandler;
+import org.agentpower.service.secure.codec.OutputEncodeRequired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.lang.NonNull;
@@ -23,10 +23,8 @@ import java.util.Map;
 @Configuration
 @AllArgsConstructor
 public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConfigurer {
-
     private final InputDecodeHandler decodeHandler;
     private final OutputEncodeHandler encodeHandler;
-    private final AgentPowerClientConfigurations configuration;
 
     @Override
     public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
@@ -39,7 +37,7 @@ public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConf
                 decodeRequired = AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), InputDecodeRequired.class);
             }
             if (decodeRequired != null) {
-                decodeHandler.decode(request, response, handlerMethod, decodeRequired, AgentPowerClientProperties.getPrivateKey());
+                decodeHandler.decode(request, response, handlerMethod, decodeRequired, AgentPowerClientConfigurations.getPrivateKey());
             }
         }
         return true;
@@ -58,7 +56,7 @@ public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConf
                     encodeRequired = AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), OutputEncodeRequired.class);
                 }
                 if (encodeRequired != null) {
-                    encodeHandler.encode(request, response, handlerMethod, modelAndView, encodeRequired, AgentPowerClientProperties.getPublicKey());
+                    encodeHandler.encode(request, response, handlerMethod, modelAndView, encodeRequired, AgentPowerClientConfigurations.getPublicKey());
                 }
             }
         }
@@ -75,10 +73,10 @@ public class AgentPowerClientWebConfig implements HandlerInterceptor, WebMvcConf
                 .allowedHeaders("*");
     }
 
-
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // TODO 添加拦截器 校验请求头
-        registry.addInterceptor(this);
+        registry.addInterceptor(this)
+                .addPathPatterns("/**");
     }
+
 }

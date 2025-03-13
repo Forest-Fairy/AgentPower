@@ -1,6 +1,6 @@
 package org.agentpower.infrastructure;
 
-import org.agentpower.user.vo.LoginUserVo;
+import org.agentpower.service.secure.recognization.LoginUserVo;
 import org.springframework.http.codec.ServerSentEvent;
 
 public class Globals {

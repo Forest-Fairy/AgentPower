@@ -1,4 +1,4 @@
-package org.agentpower.service.secure.decode;
+package org.agentpower.service.secure.codec;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

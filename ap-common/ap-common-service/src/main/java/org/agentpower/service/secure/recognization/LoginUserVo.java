@@ -1,5 +1,4 @@
-package org.agentpower.user.vo;
-
+package org.agentpower.service.secure.recognization;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

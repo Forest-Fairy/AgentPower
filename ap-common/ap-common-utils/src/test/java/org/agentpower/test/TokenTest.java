@@ -1,5 +1,7 @@
 package org.agentpower.test;
 
+import cn.hutool.crypto.asymmetric.RSA;
+import cn.hutool.crypto.asymmetric.SignAlgorithm;
 import cn.hutool.jwt.JWT;
 import com.alibaba.fastjson2.JSON;
 import org.agentpower.common.JwtUtil;
@@ -28,10 +30,12 @@ public class TokenTest {
         // 2 用RSA 公钥加密
         // 3 用RSA 私钥解密
         // 4 用JWT 秘钥进行验签
-        KeyPair keyPair = RSAUtil.generateKeyPair(RSAUtil.ALGORITHM);
-        String encrypt = RSAUtil.encrypt(jwt, keyPair.getPublic());
+//        SignAlgorithm[] enumConstants = RSAUtil.algorithmClass.getEnumConstants();
+        KeyPair keyPair = RSAUtil.generateKeyPair(SignAlgorithm.SHA512withRSA.getValue());
+        RSA rsa = RSAUtil.create(keyPair.getPublic(), keyPair.getPrivate());
+        String encrypt = RSAUtil.encryptUtf8Str2Base64Str(rsa, jwt);
         System.out.println(encrypt);
-        String decrypt = RSAUtil.decrypt(encrypt, keyPair.getPrivate());
+        String decrypt = RSAUtil.decryptBase64Str2Str(rsa, encrypt);
         System.out.println(decrypt);
         JWT parsedJwt = JwtUtil.parseJWT(decrypt, "test123".getBytes(StandardCharsets.UTF_8));
         System.out.println(parsedJwt.validate(0));

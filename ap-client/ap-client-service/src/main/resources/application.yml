@@ -1,9 +1,19 @@
 agent-power:
   client:
     port: 8848
-    # 定义服务器秘钥公钥 为空则每次启动都自动生成
-    private-key: tmp;test;private
-    public-key: tmp;test;public
-    # jwt 秘钥
-    jwt-secret: tmp;test;secret
+  codec:
+    # 启用则会对token等内容进行加解密
+    enabled: true
+    # 定义rsa 公钥秘钥
+    type: rsa
+    key-for-encode: path/to/public
+    key-for-decode: path/to/private
+  recognizer:
+    # 启用了则会加入token验证
+    enabled: true
+    # 定义jwt 秘钥
+    type: jwt
+    properties:
+      secret: tmp;test;secret
+
 
