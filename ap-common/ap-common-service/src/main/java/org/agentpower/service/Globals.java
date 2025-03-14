@@ -1,4 +1,4 @@
-package org.agentpower.infrastructure;
+package org.agentpower.service;
 
 import org.agentpower.service.secure.recognization.LoginUserVo;
 import org.springframework.http.codec.ServerSentEvent;

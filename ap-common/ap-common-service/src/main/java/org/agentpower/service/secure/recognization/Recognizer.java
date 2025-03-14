@@ -10,7 +10,7 @@ public abstract class Recognizer {
     public final String headerField() {
         return headerField;
     }
-    protected abstract Optional<LoginUserVo> recognize(String token);
+    public abstract Optional<LoginUserVo> recognize(String token);
 
     public abstract String generateToken(LoginUserVo user);
 }

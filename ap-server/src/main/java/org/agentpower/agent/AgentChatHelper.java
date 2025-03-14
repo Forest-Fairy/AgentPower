@@ -10,19 +10,17 @@ import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.StatusCode;
 import org.agentpower.api.message.ChatMediaResource;
 import org.agentpower.api.message.ChatMediaResourceProvider;
-import org.agentpower.common.RSAUtil;
 import org.agentpower.common.Tuples;
 import org.agentpower.configuration.ConfigurationService;
 import org.agentpower.configuration.agent.AgentModelConfiguration;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.configuration.resource.ResourceProviderConfiguration;
 import org.agentpower.configuration.resource.provider.ResourceProvider;
-import org.agentpower.infrastructure.Globals;
+import org.agentpower.service.Globals;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.model.Media;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.util.MimeType;
 import sun.misc.Unsafe;
 
@@ -121,7 +119,7 @@ public class AgentChatHelper {
             }
             Map<String, AgentPowerFunctionDefinition> functionMap = Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
                     .map(runtime -> runtime.getClients().get(clientServiceConfiguration.getId()))
-                    .map(Tuples._2::t1)
+                    .map(Tuples._2::t2)
                     .orElse(null);
             if (functionMap != null) {
                 // 从缓存获取到了 如果是空集合 表示客户端没有智能体函数
@@ -176,7 +174,7 @@ public class AgentChatHelper {
         public static AgentPowerFunctionDefinition getFunctionDefinition(String requestId, String clientServiceId, String functionName) {
             return Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
                     .map(ChatRuntime::getClients)
-                    .map(cs -> cs.get(clientServiceId).t1())
+                    .map(cs -> cs.get(clientServiceId).t2())
                     .map(f -> f.get(functionName))
                     .orElse(null);
         }
@@ -196,7 +194,7 @@ public class AgentChatHelper {
             return Optional.ofNullable(CHAT_RUNTIME_CACHE.get(requestId))
                     .map(ChatRuntime::getModels)
                     .map(models -> models.get(modelConfigId))
-                    .map(Tuples._2::t1)
+                    .map(Tuples._2::t2)
                     .orElse(null);
         }
     }

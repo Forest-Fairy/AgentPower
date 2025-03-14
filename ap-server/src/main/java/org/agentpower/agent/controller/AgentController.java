@@ -8,7 +8,7 @@ import org.agentpower.agent.model.ChatMessageModel;
 import org.agentpower.configuration.agent.provider.AgentModelProvider;
 import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.configuration.resource.provider.ResourceProvider;
-import org.agentpower.infrastructure.Globals;
+import org.agentpower.service.Globals;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.core.io.InputStreamResource;

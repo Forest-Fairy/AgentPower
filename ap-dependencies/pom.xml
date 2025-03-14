@@ -21,6 +21,7 @@
         <hutool.version>5.8.25</hutool.version>
         <fastjson2.version>2.0.51</fastjson2.version>
         <brotli4j.version>1.15.0</brotli4j.version>
+        <caffeine.version>3.1.8</caffeine.version>
         <bcprov.version>1.78.1</bcprov.version>
 
         <!-- Spring AI -->
@@ -73,6 +74,12 @@
                 <groupId>com.aayushatharva.brotli4j</groupId>
                 <artifactId>brotli4j</artifactId>
                 <version>${brotli4j.version}</version>
+            </dependency>
+            <!-- caffeine -->
+            <dependency>
+                <groupId>com.github.ben-manes.caffeine</groupId>
+                <artifactId>caffeine</artifactId>
+                <version>${caffeine.version}</version>
             </dependency>
 
             <!-- Spring AI -->

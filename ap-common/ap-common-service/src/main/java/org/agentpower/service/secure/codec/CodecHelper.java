@@ -1,7 +1,5 @@
 package org.agentpower.service.secure.codec;
 
-import org.bouncycastle.util.encoders.UTF8;
-
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 

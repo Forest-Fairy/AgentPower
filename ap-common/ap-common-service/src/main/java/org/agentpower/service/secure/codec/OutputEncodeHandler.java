@@ -16,10 +16,15 @@ import java.util.*;
 @Service
 public class OutputEncodeHandler {
 
-    public void encode(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
-                       @NonNull HandlerMethod handlerMethod, @Nullable ModelAndView modelAndView,
-                       @NonNull OutputEncodeRequired encodeRequired, PublicKey publicKey) {
+    public void encode(@NonNull HttpServletRequest request,
+                       @NonNull HttpServletResponse response,
+                       @NonNull HandlerMethod handlerMethod,
+                       @Nullable ModelAndView modelAndView,
+                       @NonNull OutputEncodeRequired encodeRequired) {
         if (modelAndView == null) {
+            return;
+        }
+        if (CodecHelper.getCodec() == null) {
             return;
         }
         Map<String, String[]> params = request.getParameterMap();

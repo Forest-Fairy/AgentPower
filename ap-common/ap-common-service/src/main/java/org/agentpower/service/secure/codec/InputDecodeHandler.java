@@ -16,6 +16,9 @@ public class InputDecodeHandler {
                        @NonNull HttpServletResponse response,
                        @NonNull HandlerMethod handlerMethod,
                        @NonNull InputDecodeRequired decodeRequired) {
+        if (CodecHelper.getCodec() == null) {
+            return;
+        }
         Map<String, String[]> params = request.getParameterMap();
         Map<String, String> fieldsMapping = CodecHelper.toFieldsMapping(decodeRequired);
         Map<String, String[]> result = new HashMap<>();

@@ -37,8 +37,9 @@ public class TokenTest {
         System.out.println(encrypt);
         String decrypt = RSAUtil.decryptBase64Str2Str(rsa, encrypt);
         System.out.println(decrypt);
-        JWT parsedJwt = JwtUtil.parseJWT(decrypt, "test123".getBytes(StandardCharsets.UTF_8));
+        JWT parsedJwt = JwtUtil.parseJWT(decrypt);
         System.out.println(parsedJwt.validate(0));
+        System.out.println(JwtUtil.isValid(parsedJwt, "test123".getBytes(StandardCharsets.UTF_8)));
         Thread.sleep(12000L);
         System.out.println(parsedJwt.validate(0));
 

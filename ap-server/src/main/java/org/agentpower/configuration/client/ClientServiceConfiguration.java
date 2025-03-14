@@ -1,7 +1,5 @@
 package org.agentpower.configuration.client;
 
-import cn.hutool.core.lang.UUID;
-import com.alibaba.fastjson2.JSON;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -10,11 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.agentpower.api.Constants;
-import org.agentpower.common.JwtUtil;
-import org.agentpower.common.RSAUtil;
-import org.agentpower.user.model.UserModel;
-import org.agentpower.user.vo.LoginUserVo;
+import org.agentpower.service.secure.recognization.LoginUserVo;
 
 import java.util.Base64;
 
@@ -45,14 +39,15 @@ public class ClientServiceConfiguration {
     private String updatedBy;
 
     public String generateAuthorization(String requestId, LoginUserVo user) {
-        JwtUtil.createJWT(
-                requestId,
-                JSON.toJSONString(user),
-                "client-"+id,
-                Constants.JWT_EXPIRED_DURATION,
-                null,
-                Constants.JWT_SECRET
-        )
-        return RSAUtil.encrypt(Constants.CONFIG_PREFIX + userId, RSAUtil.generatePublicKey(RSAUtil.ALGORITHM, servicePublicKey));
+//        JwtUtil.createJWT(
+//                requestId,
+//                JSON.toJSONString(user),
+//                "client-"+id,
+//                Constants.JWT_EXPIRED_DURATION,
+//                null,
+//                Constants.JWT_SECRET
+//        )
+//        return RSAUtil.encrypt(Constants.CONFIG_PREFIX + userId, RSAUtil.generatePublicKey(RSAUtil.ALGORITHM, servicePublicKey));
+        return "";
     }
 }

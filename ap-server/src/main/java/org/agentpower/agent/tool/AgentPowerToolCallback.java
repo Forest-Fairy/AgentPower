@@ -7,13 +7,10 @@ import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.StatusCode;
 import org.agentpower.api.message.ChatMessageObject;
-import org.agentpower.common.RSAUtil;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
-import org.agentpower.infrastructure.Globals;
-import org.apache.commons.lang3.StringUtils;
+import org.agentpower.service.Globals;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
-import org.springframework.http.codec.ServerSentEvent;
 import sun.misc.Unsafe;
 
 import java.util.Map;
