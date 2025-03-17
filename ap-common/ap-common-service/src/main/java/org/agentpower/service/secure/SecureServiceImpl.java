@@ -2,12 +2,11 @@ package org.agentpower.service.secure;
 
 import cn.hutool.core.lang.UUID;
 import cn.hutool.extra.spring.SpringUtil;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
+import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.agentpower.service.secure.codec.InputDecodeHandler;
 import org.agentpower.service.secure.codec.InputDecodeRequired;
 import org.agentpower.service.secure.codec.OutputEncodeHandler;
@@ -73,10 +72,10 @@ public class SecureServiceImpl implements SecureService {
             }
         }
     }
-
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         if (servletRequest instanceof HttpServletRequest request) {
+            WEB_RUNTIME_THREAD_LOCAL.set(new WebRuntime(null, request, (HttpServletResponse) servletResponse));
             String token = request.getHeader(this.recognizer.headerField());
             if (StringUtils.isNotBlank(token)) {
                 Optional<LoginUserVo> recognized = this.recognizer.recognize(token);
@@ -91,4 +90,39 @@ public class SecureServiceImpl implements SecureService {
             filterChain.doFilter(servletRequest, servletResponse);
         }
     }
+
+    private static final ThreadLocal<WebRuntime> WEB_RUNTIME_THREAD_LOCAL = new ThreadLocal<>();
+    @AllArgsConstructor
+    @Getter
+    private static class WebRuntime {
+        LoginUserVo user;
+        HttpServletRequest request;
+        HttpServletResponse response;
+    }
+
+    public static HttpServletRequest getRequest() {
+        return Optional.ofNullable(WEB_RUNTIME_THREAD_LOCAL.get())
+                .map(WebRuntime::getRequest)
+                .orElse(null);
+    }
+
+    public static HttpServletResponse getResponse() {
+        return Optional.ofNullable(WEB_RUNTIME_THREAD_LOCAL.get())
+                .map(WebRuntime::getResponse)
+                .orElse(null);
+    }
+
+    public static LoginUserVo getLoginUser() {
+        return Optional.ofNullable(WEB_RUNTIME_THREAD_LOCAL.get())
+                .map(WebRuntime::getUser)
+                .orElse(null);
+    }
+
+    public static String getRequestId() {
+        return Optional.ofNullable(WEB_RUNTIME_THREAD_LOCAL.get())
+                .map(WebRuntime::getRequest)
+                .map(ServletRequest::getRequestId)
+                .orElse(null);
+    }
+
 }

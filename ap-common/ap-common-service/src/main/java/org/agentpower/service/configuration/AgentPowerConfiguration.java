@@ -49,7 +49,7 @@ public class AgentPowerConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(service)
+        registry.addInterceptor(this.service)
                 .addPathPatterns("/**");
     }
 

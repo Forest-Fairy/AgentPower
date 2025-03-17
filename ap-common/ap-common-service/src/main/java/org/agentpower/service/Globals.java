@@ -1,5 +1,7 @@
 package org.agentpower.service;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.agentpower.service.secure.SecureServiceImpl;
 import org.agentpower.service.secure.recognization.LoginUserVo;
 import org.springframework.http.codec.ServerSentEvent;
 
@@ -20,6 +22,9 @@ public class Globals {
     }
 
     public static class RequestContext {
+        public static HttpServletRequest getRequest() {
+            return SecureServiceImpl.getRequest();
+        }
         public static String getRequestId() {
             return null;
         }
