@@ -1,4 +1,4 @@
-package org.agentpower.client.service;
+package org.agentpower.client;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
 import com.alibaba.fastjson2.JSON;
@@ -6,7 +6,7 @@ import lombok.val;
 import org.agentpower.api.AgentPowerClientService;
 import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
-import org.agentpower.infrastructure.AgentPowerFunction;
+import org.agentpower.client.api.AgentPowerFunction;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.resolution.SpringBeanToolCallbackResolver;
@@ -28,25 +28,31 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
         refreshResolver();
     }
 
-    public void addTool(String toolName, Object function) {
-        if (function instanceof AgentPowerFunction func) {
+    public boolean isFunctionObject(Object function) {
+        return function instanceof AgentPowerFunction;
+    }
+
+    public boolean addTool(String toolName, Object function) {
+        if (isFunctionObject(function)) {
+            val func = (AgentPowerFunction) function;
             synchronized (beansOfType) {
                 val old = beansOfType.put(toolName, func);
                 beansOfType.put(toolName, old != null ? old : func);
                 if (old != null) {
-                    throw new IllegalArgumentException("工具已存在，请先卸载：" + toolName);
+                    throw new IllegalStateException("工具已存在，请先卸载：" + toolName);
                 }
+                return true;
             }
         } else {
-            Objects.requireNonNull(function, "工具对象不存在，请检查代码逻辑");
-            throw new IllegalStateException("工具类型有误：" + function.getClass());
+//            Objects.requireNonNull(function, "工具对象不存在，请检查代码逻辑");
+            return false;
         }
     }
 
     public void removeTool(String toolName) {
         val old = beansOfType.remove(toolName);
         if (old == null) {
-            throw new IllegalArgumentException("工具不存在，请先添加：" + toolName);
+            throw new IllegalStateException("工具不存在，请先添加：" + toolName);
         }
     }
 
@@ -76,8 +82,7 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
                         FunctionRequest.CallResult.Type.DIRECT, result);
             }
         } catch (Throwable throwable) {
-            callResult = new FunctionRequest.CallResult(
-                    FunctionRequest.CallResult.Type.ERROR, ExceptionUtil.stacktraceToString(throwable));
+            callResult = FunctionRequest.errorCallResult(throwable);
         } finally {
             Thread.currentThread().setContextClassLoader(classLoader);
         }

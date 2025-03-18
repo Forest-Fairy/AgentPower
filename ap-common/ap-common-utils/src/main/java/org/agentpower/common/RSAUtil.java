@@ -48,6 +48,11 @@ public class RSAUtil {
         return new RSA(publicKey.getAlgorithm(), null, publicKey);
     }
 
+    public static RSA createToDecode(PrivateKey privateKey) {
+        Objects.requireNonNull(privateKey, "私钥不存在，请检查代码逻辑");
+        return new RSA(privateKey.getAlgorithm(), privateKey, null);
+    }
+
     public static RSA create(PublicKey publicKey, PrivateKey privateKey) {
         Objects.requireNonNull(publicKey, "公钥不存在，请检查代码逻辑");
         Objects.requireNonNull(privateKey, "私钥不存在，请检查代码逻辑");

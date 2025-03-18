@@ -6,6 +6,8 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 @ConfigurationProperties(Constants.CONFIG_PREFIX)
 public class AgentPowerBaseProperties {
+    private boolean xssDefence;
+
     @NestedConfigurationProperty
     private final ClientProperties client = new ClientProperties();
     @NestedConfigurationProperty
@@ -18,5 +20,9 @@ public class AgentPowerBaseProperties {
 
     public static class ServerProperties {
         private Integer port;
+    }
+
+    public boolean xssDefenceEnabled() {
+        return xssDefence;
     }
 }

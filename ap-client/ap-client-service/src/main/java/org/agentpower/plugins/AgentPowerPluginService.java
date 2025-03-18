@@ -2,8 +2,7 @@ package org.agentpower.plugins;
 
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
-import org.agentpower.client.service.AgentPowerClientServiceImpl;
-import org.agentpower.infrastructure.AgentPowerFunction;
+import org.agentpower.client.AgentPowerClientServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.event.ApplicationContextInitializedEvent;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

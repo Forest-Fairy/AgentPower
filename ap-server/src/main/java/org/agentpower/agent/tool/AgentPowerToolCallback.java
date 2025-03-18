@@ -26,7 +26,7 @@ public class AgentPowerToolCallback implements ToolCallback {
 
     public AgentPowerToolCallback(AgentPowerToolCallbackResolver resolver, ClientServiceConfiguration clientServiceConfiguration, String functionName) {
         this.resolver = resolver;
-        this.requestId = Globals.RequestContext.getRequestId();
+        this.requestId = Globals.WebContext.getRequestId();
         this.loginUserId = Globals.User.getLoginUser().getId();
         this.clientServiceConfiguration = clientServiceConfiguration;
         // TODO 如果requestId 是空 导致获取不到函数定义 那就只能重新发一条消息给客户端以拉取客户端的函数信息
@@ -63,9 +63,13 @@ public class AgentPowerToolCallback implements ToolCallback {
     private static final Map<String, Object> CALL_RESULT_CACHE =  new ConcurrentHashMap<>();
 
     private FunctionRequest.CallResult callClientFunction(String toolInput) {
-        Globals.Client.sendMessage(requestId, FunctionRequest.Event.FUNC_CALL, buildEventData(
-                requestId, loginUserId, FunctionRequest.Event.FUNC_CALL,
-                toolDefinition.name(), clientServiceConfiguration, toolInput));
+        try {
+            Globals.Client.sendMessage(requestId, FunctionRequest.Event.FUNC_CALL, buildEventData(
+                    requestId, loginUserId, FunctionRequest.Event.FUNC_CALL,
+                    toolDefinition.name(), clientServiceConfiguration, toolInput));
+        } catch (Exception e) {
+            return FunctionRequest.errorCallResult(e);
+        }
         String functionDefinitionKey = wrapFunctionDefinitionKey(requestId, toolDefinition.name());
         try {
             String callResult = CompletableFuture.supplyAsync(() -> {

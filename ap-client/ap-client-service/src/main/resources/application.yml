@@ -1,4 +1,5 @@
 agent-power:
+  xss-defence: true
   client:
     port: 8848
   codec:

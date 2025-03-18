@@ -9,6 +9,7 @@ import org.agentpower.configuration.agent.provider.AgentModelProvider;
 import org.agentpower.agent.service.AgentChatService;
 import org.agentpower.configuration.resource.provider.ResourceProvider;
 import org.agentpower.service.Globals;
+import org.agentpower.service.secure.recognization.LoginUserVo;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.core.io.InputStreamResource;
@@ -58,10 +59,10 @@ public class AgentController {
     @PostMapping(value = "chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public Flux<ServerSentEvent<String>> chat(@RequestPart ChatMessageObject messageObject,
                                               @RequestPart(required = false) MultipartFile file) throws IOException {
-        String loginUserId = Globals.User.getLoginUser().getId();
+        LoginUserVo loginUserVo = Globals.User.getLoginUser();
         String systemKnowledge = getKnowledgeFromFile(file);
         return Optional.of(ChatMessageModel.builder())
-                .map(builder -> builder.requestId(Globals.RequestContext.getRequestId())
+                .map(builder -> builder.requestId(Globals.WebContext.getRequestId())
                         .messageType(MessageType.USER.getValue())
                         .sessionId(messageObject.sessionId())
                         .textContent(messageObject.textContent())
@@ -71,8 +72,8 @@ public class AgentController {
                         .knowledgeBaseId(messageObject.setting().knowledgeBaseId())
                         .chatMemoryCouplesCount(messageObject.setting().chatMemoryCouplesCount())
                         .resourceProviders(JSON.toJSONString(messageObject.setting().resourceProviders()))
-                        .userId(loginUserId)
-                        .createdBy(loginUserId)
+                        .userId(loginUserVo.getId())
+                        .createdBy(loginUserVo.getId())
                         .createdTime(DateUtil.now())
                         .build())
                 .map(chatService::chat)

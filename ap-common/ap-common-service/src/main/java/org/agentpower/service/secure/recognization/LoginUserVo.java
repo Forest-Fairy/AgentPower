@@ -14,4 +14,6 @@ public class LoginUserVo {
     private String username;
     private String email;
     private String phone;
+    /** role 的格式  role1;role2; */
+    private String role;
 }

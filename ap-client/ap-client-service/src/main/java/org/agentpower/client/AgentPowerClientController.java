@@ -3,7 +3,6 @@ package org.agentpower.client;
 import lombok.AllArgsConstructor;
 import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
-import org.agentpower.client.service.AgentPowerClientServiceImpl;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,7 +15,7 @@ import java.util.Map;
 @Controller
 @RequestMapping("ap-client-service")
 @AllArgsConstructor
-public class AgentPowerClientFunctionController {
+public class AgentPowerClientController {
     private final AgentPowerClientServiceImpl clientService;
 
     @PostMapping("call")
@@ -31,6 +30,6 @@ public class AgentPowerClientFunctionController {
         return clientService.listFunctions();
     }
 
-
+    public
 
 }

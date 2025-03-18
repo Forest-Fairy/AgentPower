@@ -5,9 +5,8 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.thread.BlockPolicy;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
-import org.agentpower.client.service.AgentPowerClientServiceImpl;
+import org.agentpower.client.AgentPowerClientServiceImpl;
 import org.agentpower.common.Tuples;
-import org.agentpower.infrastructure.AgentPowerFunction;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -22,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -37,7 +35,7 @@ import java.util.stream.Collectors;
 @Log4j2
 public class AgentPowerPluginInstallationService {
     private static final Map<String, Tuples._2<
-            PluginState, Tuples._3<URLClassLoader, Map<String, Object>, Long>
+            PluginState, Tuples._3<AgentPowerPluginClassLoader, Map<String, Object>, Long>
             >> PLUGIN_INFO_MAP = new HashMap<>();
     private final ConfigurableApplicationContext applicationContext;
     private final AgentPowerClientServiceImpl clientService;
@@ -119,7 +117,7 @@ public class AgentPowerPluginInstallationService {
                     val pluginInfo = entry.getValue().t2();
                     val pluginFileSize = pluginInfo.t3();
                     Set<String> functionBeans = pluginInfo.t2().entrySet().stream()
-                            .filter(beanInfo -> beanInfo.getValue() instanceof AgentPowerFunction)
+                            .filter(beanInfo -> clientService.isFunctionObject(beanInfo.getValue()))
                             .map(Map.Entry::getKey)
                             .collect(Collectors.toSet());
                     return new AgentPowerPluginVo(pluginJarFileName, pluginStatus,
@@ -143,7 +141,7 @@ public class AgentPowerPluginInstallationService {
      * @return 错误信息
      */
     public String importPlugin(String jarFileName, InputStream inputStream) {
-        Tuples._2<PluginState, Tuples._3<URLClassLoader, Map<String, Object>, Long>>
+        Tuples._2<PluginState, Tuples._3<AgentPowerPluginClassLoader, Map<String, Object>, Long>>
                 pluginInfo = PLUGIN_INFO_MAP.get(jarFileName);
         if (pluginInfo != null) {
             return pluginInfo.t1().toString();
@@ -206,7 +204,7 @@ public class AgentPowerPluginInstallationService {
      * @return 错误信息
      */
     public String restorePlugin(String jarFileName) {
-        Tuples._2<PluginState, Tuples._3<URLClassLoader, Map<String, Object>, Long>>
+        Tuples._2<PluginState, Tuples._3<AgentPowerPluginClassLoader, Map<String, Object>, Long>>
                 pluginInfo = PLUGIN_INFO_MAP.get(jarFileName);
         if (pluginInfo != null) {
             return pluginInfo.t1().toString();
@@ -338,8 +336,8 @@ public class AgentPowerPluginInstallationService {
                 throw new IllegalStateException(toolJarFileName + " jar包中未找到任何类");
             }
             URL[] urls = {file.toURI().toURL()};
-            URLClassLoader classLoader = new URLClassLoader(urls, this.getClass().getClassLoader());
-            Tuples._3<URLClassLoader, Map<String, Object>, Long> jarInfo = new Tuples._3<>(
+            AgentPowerPluginClassLoader classLoader = new AgentPowerPluginClassLoader(urls, this.getClass().getClassLoader());
+            Tuples._3<AgentPowerPluginClassLoader, Map<String, Object>, Long> jarInfo = new Tuples._3<>(
                     classLoader, new HashMap<>(), file.length());
             // 更新信息 出错时可以卸载
             PLUGIN_INFO_MAP.put(toolJarFileName, new Tuples._2<>(PluginState.IMPORTING, jarInfo));
@@ -351,7 +349,7 @@ public class AgentPowerPluginInstallationService {
             LogError(e, "插件jar包 {} 安装出错：{}", toolJarFileName, e.getMessage());
             boolean doRemove = false;
             synchronized (PLUGIN_INFO_MAP) {
-                Tuples._2<PluginState, Tuples._3<URLClassLoader, Map<String, Object>, Long>>
+                Tuples._2<PluginState, Tuples._3<AgentPowerPluginClassLoader, Map<String, Object>, Long>>
                         pluginInfo = PLUGIN_INFO_MAP.get(toolJarFileName);
                 if (pluginInfo != null && pluginInfo.t1().equals(PluginState.IMPORTING)) {
                     if (pluginInfo.t2() != null) {
@@ -377,7 +375,7 @@ public class AgentPowerPluginInstallationService {
      * @param toolJarFileName jar包名称
      */
     private void removeToolJar(String toolJarFileName, File backupPath) {
-        Tuples._2<PluginState, Tuples._3<URLClassLoader, Map<String, Object>, Long>> pluginInfo;
+        Tuples._2<PluginState, Tuples._3<AgentPowerPluginClassLoader, Map<String, Object>, Long>> pluginInfo;
         synchronized (PLUGIN_INFO_MAP) {
             pluginInfo = PLUGIN_INFO_MAP.get(toolJarFileName);
             if (pluginInfo == null
@@ -389,8 +387,8 @@ public class AgentPowerPluginInstallationService {
             }
             PLUGIN_INFO_MAP.put(toolJarFileName, pluginInfo = new Tuples._2<>(PluginState.UNINSTALLING, pluginInfo.t2()));
         }
-        Tuples._3<URLClassLoader, Map<String, Object>, Long> jarInfo = pluginInfo.t2();
-        URLClassLoader classLoader = jarInfo.t1();
+        Tuples._3<AgentPowerPluginClassLoader, Map<String, Object>, Long> jarInfo = pluginInfo.t2();
+        AgentPowerPluginClassLoader classLoader = jarInfo.t1();
         try {
             UnregisterBeans(applicationContext, clientService, jarInfo.t2());
         } catch (Exception e) {
@@ -434,7 +432,7 @@ public class AgentPowerPluginInstallationService {
      * @param classLoader       jar包的类加载器
      * @return bean的字节码对象集
      */
-    private Map<String, Class<?>> getSpringBeanClassesToRegister(String jarFileName, List<String> loadedClassNames, URLClassLoader classLoader) {
+    private Map<String, Class<?>> getSpringBeanClassesToRegister(String jarFileName, List<String> loadedClassNames, AgentPowerPluginClassLoader classLoader) {
         Map<String, Class<?>> springClasses = new HashMap<>();
         for (String loadedClassname : loadedClassNames) {
             Class<?> clazz = null;
@@ -563,14 +561,20 @@ public class AgentPowerPluginInstallationService {
                                       Map<String, Object> registeredBeans, Map<String, Class<?>> springClasses) {
         // 生成的每一个对象 如果是AgentPowerFunction的实现类，则调用clientService.addTool方法
         synchronized (clientService) {
-            springClasses.forEach((name, clazz) -> {
-                Object beanInstance = applicationContext.getBeanFactory().createBean(clazz);
-                applicationContext.getBeanFactory().registerSingleton(name, beanInstance);
-                registeredBeans.put(name, beanInstance);
-                if (beanInstance instanceof AgentPowerFunction) {
-                    clientService.addTool(name, beanInstance);
-                }
-            });
+            long registeredFunctions = springClasses.entrySet().stream()
+                    .filter(entry -> {
+                        String name = entry.getKey();
+                        Class<?> clazz = entry.getValue();
+                        Object beanInstance = applicationContext.getBeanFactory().createBean(clazz);
+                        applicationContext.getBeanFactory().registerSingleton(name, beanInstance);
+                        registeredBeans.put(name, beanInstance);
+                        return clientService.addTool(name, beanInstance);
+                    })
+                    .count();
+            if (registeredFunctions == 0L) {
+                // 没有函数 卸载插件
+                throw new IllegalArgumentException("插件包未找到任何函数");
+            }
         }
     }
 
@@ -587,7 +591,7 @@ public class AgentPowerPluginInstallationService {
         synchronized (clientService) {
             beans.forEach((beanName, bean) -> {
                 try {
-                    if (bean instanceof AgentPowerFunction) {
+                    if (clientService.isFunctionObject(bean)) {
                         // 从clientService中移除工具
                         clientService.removeTool(beanName);
                     }

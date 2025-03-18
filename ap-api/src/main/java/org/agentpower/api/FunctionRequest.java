@@ -3,6 +3,10 @@ package org.agentpower.api;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.io.BufferedOutputStream;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
 @Getter
@@ -27,5 +31,13 @@ public class FunctionRequest {
             /** 代理调用 */
             public static final String AGENT = "AGENT";
         }
+    }
+    public static CallResult errorCallResult(Throwable error) {
+        return new CallResult(CallResult.Type.ERROR, errorTrace(error));
+    }
+    private static String errorTrace(Throwable error) {
+        StringWriter out = new StringWriter();
+        error.printStackTrace(new PrintWriter(out));
+        return "%s \n %s".formatted(error.getMessage(), out.toString());
     }
 }

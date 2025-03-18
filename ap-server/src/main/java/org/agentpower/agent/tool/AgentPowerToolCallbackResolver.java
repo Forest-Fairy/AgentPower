@@ -62,7 +62,7 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
         }
         return Optional.of(ChatMessageModel.builder())
                 .map(builder -> builder
-                        .requestId(Globals.RequestContext.getRequestId())
+                        .requestId(Globals.WebContext.getRequestId())
                         .messageType(MessageType.SYSTEM.getValue())
                         .sessionId(newMessageObject.sessionId())
                         .textContent(newMessageObject.textContent())

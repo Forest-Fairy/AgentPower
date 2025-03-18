@@ -9,21 +9,24 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>ap-client-plugins</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>ap-client-plugin-file-reader</module>
-    </modules>
+    <artifactId>ap-client-api</artifactId>
 
-    <properties>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>org.agentpower</groupId>
-            <artifactId>ap-client-api</artifactId>
+            <artifactId>ap-common-utils</artifactId>
             <version>${revision}</version>
-            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.agentpower</groupId>
+            <artifactId>ap-common-service</artifactId>
+            <version>${revision}</version>
         </dependency>
     </dependencies>
+
+
+    <properties>
+
+    </properties>
 
 </project>

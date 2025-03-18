@@ -1,22 +1,8 @@
 package org.agentpower.service.secure.codec;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class CodecHelper {
-
-    public static Codec getCodec() {
-        return CodecConfigurations.getCodec();
-    }
-
-    public static String encode(String data) {
-        return Base64.getEncoder().encodeToString(getCodec().encode(data.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    public static String decode(String data) {
-        return new String(getCodec().decode(Base64.getDecoder().decode(data)), StandardCharsets.UTF_8);
-    }
-
     public static Map<String, String> toFieldsMapping(OutputEncodeRequired encodeRequired) {
         if (encodeRequired != null) {
             String[] fields = encodeRequired.fields();

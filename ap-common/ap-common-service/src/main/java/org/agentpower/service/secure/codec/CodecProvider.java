@@ -20,7 +20,8 @@ public abstract class CodecProvider {
         }
     }
 
-    protected abstract Codec GenerateMyCodec(String algorithm, String keyForEncode, String keyForDecode);
+    protected abstract Decoder generateDecoder(String algorithm, String keyForDecode);
+    protected abstract Encoder generateEncoder(String algorithm, String keyForDecode);
 
 
     public static class Registry {
@@ -35,11 +36,19 @@ public abstract class CodecProvider {
         }
     }
 
-    public static Codec GenerateCodec(String type, String keyForEncode, String keyForDecode) {
+    public static Decoder GenerateDecoder(String type, String keyForDecode) {
         return Registry.PROVIDER_MAP.computeIfAbsent(type,
                         (k) -> {
                             throw new IllegalArgumentException("编码器供应者不存在：" + type);
                         })
-                .GenerateMyCodec(type, keyForEncode, keyForDecode);
+                .generateDecoder(type, keyForDecode);
+    }
+
+    public static Encoder GenerateEncoder(String type, String keyForEncode) {
+        return Registry.PROVIDER_MAP.computeIfAbsent(type,
+                        (k) -> {
+                            throw new IllegalArgumentException("编码器供应者不存在：" + type);
+                        })
+                .generateEncoder(type, keyForEncode);
     }
 }

@@ -12,6 +12,7 @@
     <artifactId>ap-client</artifactId>
     <packaging>pom</packaging>
     <modules>
+        <module>ap-client-api</module>
         <module>ap-client-service</module>
         <module>ap-client-plugins</module>
     </modules>

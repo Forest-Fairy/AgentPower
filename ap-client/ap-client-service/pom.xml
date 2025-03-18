@@ -17,12 +17,7 @@
     <dependencies>
         <dependency>
             <groupId>org.agentpower</groupId>
-            <artifactId>ap-common-utils</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.agentpower</groupId>
-            <artifactId>ap-common-service</artifactId>
+            <artifactId>ap-client-api</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>

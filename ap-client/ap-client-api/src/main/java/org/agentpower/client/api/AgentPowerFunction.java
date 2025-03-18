@@ -1,4 +1,4 @@
-package org.agentpower.infrastructure;
+package org.agentpower.client.api;
 
 import com.alibaba.fastjson2.JSON;
 import org.agentpower.api.FunctionRequest;
