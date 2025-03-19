@@ -6,6 +6,7 @@ import lombok.val;
 import org.agentpower.api.AgentPowerClientService;
 import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
+import org.agentpower.api.info.ClientServiceConfigurationInfo;
 import org.agentpower.client.api.AgentPowerFunction;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.tool.ToolCallback;
@@ -97,6 +98,11 @@ public class AgentPowerClientServiceImpl implements AgentPowerClientService {
                 .map(func -> new AgentPowerFunctionDefinition.FunctionDefinition(
                         func.name(), func.description(), func.inputSchema()))
                 .toList();
+    }
+
+    public ClientServiceConfigurationInfo getClientInfo() {
+        // 先返回null 后续再详细设计完善实现
+        return null;
     }
 
 //        return functionMap

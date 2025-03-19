@@ -11,7 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginUserVo {
     private String id;
+    private String uid;
     private String username;
+    private String nickname;
     private String email;
     private String phone;
     /** privileges 的格式  p1;p2; */

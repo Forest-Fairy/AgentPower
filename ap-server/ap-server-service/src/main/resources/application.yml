@@ -1,0 +1,18 @@
+agent-power:
+  xss-defence: true
+  server:
+    port: 8845
+  codec:
+    # 启用则会对token等内容进行加解密
+    enabled: true
+    # 定义rsa 公钥秘钥
+    type: rsa
+    key-for-encode: path/to/public
+    key-for-decode: path/to/private
+  recognizer:
+    # 启用了则会加入token验证
+    enabled: true
+    # 定义jwt 秘钥
+    type: jwt
+    properties:
+      secret: tmp;test;secret

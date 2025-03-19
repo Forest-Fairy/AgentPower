@@ -4,6 +4,7 @@ import cn.hutool.core.util.ArrayUtil;
 import com.alibaba.fastjson2.JSON;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
 import org.agentpower.api.Constants;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.lang.NonNull;
@@ -13,15 +14,16 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.util.*;
 
+@Getter
 public class OutputCodec {
+    /** 登陆等请求生成token时需要编码器 */
+    private final Encoder encoder;
     /** 请求方如需加密 则利用接收方的公钥对请求头里的公钥加密 因此需要接收方的解码器来解密 */
-    private final Decoder receiverDecoder;
-    public OutputCodec(Decoder decoder) {
-        this.receiverDecoder = decoder;
-    }
+    private final Decoder decoder;
 
-    public Decoder getReceiverDecoder() {
-        return receiverDecoder;
+    public OutputCodec(Encoder encoder, Decoder decoder) {
+        this.encoder = encoder;
+        this.decoder = decoder;
     }
 
     /**
@@ -39,7 +41,7 @@ public class OutputCodec {
         // 从请求头获取发起方公钥 构建 Encoder
         String publicKey = Optional.ofNullable(request.getHeader(Constants.Header.ENCODED_KEY))
                 .filter(StringUtils::isNotBlank)
-                .map(receiverDecoder::decodeToUtf8Str)
+                .map(decoder::decodeToUtf8Str)
                 .orElse(null);
         if (StringUtils.isBlank(publicKey)) {
             // 请求头未传入公钥则明文传输

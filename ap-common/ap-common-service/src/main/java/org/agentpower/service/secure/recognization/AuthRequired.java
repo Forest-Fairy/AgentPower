@@ -28,8 +28,7 @@ public abstract class AuthRequired {
         handler.auth(requiredType, loginUserVo);
     }
 
-    private static final AuthRequired Default = new AuthRequired(
-            Arrays.stream(Types.values()).map(Types::name).toArray(String[]::new)) {
+    private static final AuthRequired Default = new AuthRequired(Types.values()) {
 
         void authLogin(LoginUserVo loginUser) {
             if (StringUtils.isBlank(loginUser.getId())) {
@@ -51,35 +50,43 @@ public abstract class AuthRequired {
         @Override
         protected void auth(String requiredType, LoginUserVo loginUserVo) {
             String type = requiredType.toUpperCase();
-            if (type.equals(Types.NONE.name())) {
+            if (type.equals(Types.NONE)) {
                 return;
             }
             this.authLogin(loginUserVo);
-            if (type.equals(Types.ADMIN.name())) {
+            if (type.equals(Types.ADMIN)) {
                 this.authAdmin(loginUserVo);
             }
-            if (type.equals(Types.MANAGER.name())) {
+            if (type.equals(Types.MANAGER)) {
                 this.authManager(loginUserVo);
             }
         }
     };
 
-    public enum Types {
+    public static class Types {
         /** 无需验证 */
-        NONE,
+        public static final String NONE = "NONE";
         /** 登陆用户 */
-        LOGIN_BY_DEFAULT,
+        public static final String LOGIN = "LOGIN";
         /** 超级管理员 */
-        ADMIN,
+        public static final String ADMIN = "ADMIN";
         /** 后台管理员 */
-        MANAGER,
-        ;
+        public static final String MANAGER = "MANAGER";
+
+        public static String[] values() {
+            return new String[] {
+                    NONE,
+                    LOGIN,
+                    ADMIN,
+                    MANAGER
+            };
+        }
     }
 
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Type {
-        String value();
+        String value() default Types.LOGIN;
     }
 
 }

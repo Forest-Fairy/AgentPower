@@ -17,10 +17,15 @@ import lombok.NoArgsConstructor;
 public class UserModel {
     @Id @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
+    private String uid;
     private String username;
     private String email;
     private String phone;
     private String password;
+
+    private String nickname;
+    private String avatarUrl;
+    private String sign;
 
     private String createdTime;
     private String createdBy;
@@ -29,4 +34,12 @@ public class UserModel {
     private String deletedTime;
     private String deletedBy;
     private int status;
+
+    public static class Status {
+        public static final int DELETED = -1;
+        public static final int ERROR = 0;
+        public static final int NORMAL = 1;
+        public static final int NOT_EDIT = 2;
+        public static final int BANNED = 3;
+    }
 }

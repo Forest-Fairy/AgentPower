@@ -37,18 +37,18 @@ import java.util.Set;
 
 @Service
 // 确保 recognizer 能获取到
-@AutoConfigureAfter({RecognizerConfigurations.class})
+@AutoConfigureAfter({AgentPowerRecognizerConfiguration.class})
 public class SecureServiceImpl implements SecureService {
 
     private final Recognizer recognizer;
-    private final InputCodec decodeHandler;
-    private final OutputCodec encodeHandler;
+    private final InputCodec inputCodec;
+    private final OutputCodec outputCodec;
     private final Environment environment;
 
-    public SecureServiceImpl(InputCodec decodeHandler, OutputCodec encodeHandler, Environment environment) {
-        this.recognizer = RecognizationHelper.generateRecognizer();
-        this.decodeHandler = decodeHandler;
-        this.encodeHandler = encodeHandler;
+    public SecureServiceImpl(Recognizer recognizer, InputCodec inputCodec, OutputCodec outputCodec, Environment environment) {
+        this.recognizer = recognizer;
+        this.inputCodec = inputCodec;
+        this.outputCodec = outputCodec;
         this.environment = environment;
     }
 
@@ -66,7 +66,7 @@ public class SecureServiceImpl implements SecureService {
                             Optional.ofNullable(AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), AuthRequired.Type.class))
                                     .map(AuthRequired.Type::value)
                                     // auth LOGIN as default
-                                    .orElse(AuthRequired.Types.LOGIN_BY_DEFAULT.name())
+                                    .orElse(AuthRequired.Types.LOGIN)
                     );
             AuthRequired.Auth(requiredType, getLoginUser());
 
@@ -75,7 +75,7 @@ public class SecureServiceImpl implements SecureService {
                 decodeRequired = AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), InputDecodeRequired.class);
             }
             if (decodeRequired != null) {
-                decodeHandler.decode(request, response, handlerMethod, decodeRequired);
+                inputCodec.decode(request, response, handlerMethod, decodeRequired);
             }
         }
         return true;
@@ -93,7 +93,7 @@ public class SecureServiceImpl implements SecureService {
                     encodeRequired = AnnotationUtils.findAnnotation(handlerMethod.getBeanType(), OutputEncodeRequired.class);
                 }
                 if (encodeRequired != null) {
-                    encodeHandler.encode(request, response, handlerMethod, modelAndView, encodeRequired);
+                    outputCodec.encode(request, response, handlerMethod, modelAndView, encodeRequired);
                 }
             }
         }
@@ -102,19 +102,22 @@ public class SecureServiceImpl implements SecureService {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         if (servletRequest instanceof HttpServletRequest request) {
             final String token = request.getHeader(this.recognizer.headerField());
+            Optional<LoginUserVo> recognized = Optional.empty();
             if (StringUtils.isNotBlank(token)) {
-                String tokenMayDecoded = Optional.ofNullable(decodeHandler.getDecoder())
+                String tokenMayDecoded = Optional.ofNullable(inputCodec.getDecoder())
                         .map(decoder -> decoder.decodeToUtf8Str(token))
                         .orElse(token);
-                Optional<LoginUserVo> recognized = this.recognizer.recognize(tokenMayDecoded);
-                WEB_RUNTIME_THREAD_LOCAL.set(new WebRuntime(
-                        recognized.orElse(null), request, (HttpServletResponse) servletResponse));
+                recognized = this.recognizer.recognize(tokenMayDecoded);
+            }
+            request = new XssHttpServletRequestWrapper(request);
+            WEB_RUNTIME_THREAD_LOCAL.set(new WebRuntime(
+                    recognized.orElse(null), request,
+                    (HttpServletResponse) servletResponse));
 //                request.getSession().setAttribute("qid", UUID.fastUUID().toString());
-                try {
-                    filterChain.doFilter(new XssHttpServletRequestWrapper(request), servletResponse);
-                } finally {
-                    WEB_RUNTIME_THREAD_LOCAL.remove();
-                }
+            try {
+                filterChain.doFilter(request, servletResponse);
+            } finally {
+                WEB_RUNTIME_THREAD_LOCAL.remove();
             }
         } else {
             // 未知直接放行

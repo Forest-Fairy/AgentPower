@@ -1,4 +1,4 @@
-//package org.agentpower.infrastracture;
+package org.agentpower.infrastructure;//package org.agentpower.infrastracture;
 //
 //import jakarta.servlet.http.HttpServletResponse;
 //import org.springframework.http.HttpHeaders;

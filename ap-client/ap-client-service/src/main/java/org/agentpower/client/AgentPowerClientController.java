@@ -33,7 +33,7 @@ public class AgentPowerClientController {
 
     @GetMapping("getClientInfo")
     public ClientServiceConfigurationInfo getClientInfo() {
-
+        return clientService.getClientInfo();
     }
 
 }

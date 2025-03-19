@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.agentpower</groupId>
-        <artifactId>ap-client</artifactId>
+        <artifactId>ap-server</artifactId>
         <version>${revision}</version>
     </parent>
 
-    <artifactId>ap-client-service</artifactId>
+    <artifactId>ap-server-service</artifactId>
 
     <properties>
     </properties>
@@ -17,14 +17,11 @@
     <dependencies>
         <dependency>
             <groupId>org.agentpower</groupId>
-            <artifactId>ap-client-api</artifactId>
+            <artifactId>ap-server-api</artifactId>
             <version>${revision}</version>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-core</artifactId>
-        </dependency>
     </dependencies>
+
 
     <build>
         <plugins>
@@ -36,12 +33,12 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
-<!--                    <excludes>-->
-<!--                        <exclude>*.yaml</exclude>-->
-<!--                        <exclude>*.xml</exclude>-->
-<!--                    </excludes>-->
+                    <!--                    <excludes>-->
+                    <!--                        <exclude>*.yaml</exclude>-->
+                    <!--                    </excludes>-->
                 </configuration>
             </plugin>
+            <!-- 将所有依赖解压到jar包中 可能这样执行比较快 未验证 -->
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
@@ -52,9 +49,9 @@
                         </goals>
                         <phase>package</phase>
                         <configuration>
-                            <finalName>agent-power-client-service</finalName>
+                            <finalName>agent-power-server</finalName>
                             <descriptors>
-                                <descriptor>src/main/assembly/ap-cli-service.xml</descriptor>
+                                <descriptor>src/main/assembly/ap-server.xml</descriptor>
                             </descriptors>
                             <appendAssemblyId>false</appendAssemblyId>
                         </configuration>
@@ -63,5 +60,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

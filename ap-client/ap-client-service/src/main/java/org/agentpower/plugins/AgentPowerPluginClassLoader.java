@@ -22,8 +22,8 @@ public class AgentPowerPluginClassLoader extends URLClassLoader {
                 long t1 = System.nanoTime();
                 try {
                     c = findClass(name);
-                    jdk.internal.perf.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
-                    jdk.internal.perf.PerfCounter.getFindClassTime().increment();
+//                    jdk.internal.perf.PerfCounter.getFindClassTime().addElapsedTimeFrom(t1);
+//                    jdk.internal.perf.PerfCounter.getFindClassTime().increment();
                 } catch (ClassNotFoundException e) {
                     // failed to find the class then load from parent
                     c = this.getParent().loadClass(name);

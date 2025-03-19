@@ -14,6 +14,9 @@ public class ClientServiceConfigurationInfo {
     private String recognizerType;
     /** 客户端认证头 */
     private String recognizerHeader;
-    /** 客户端秘钥等信息 */
-    private String recognizerProperties;
+//    配置信息为加密信息 需要手动获取
+//    或先通过发请求给服务端 服务端校验后发送加密消息给浏览器
+//    浏览器利用加密信息去访问客户端接口 客户端再校验消息的安全性
+//    /** 客户端秘钥等信息 */
+//    private String recognizerProperties;
 }

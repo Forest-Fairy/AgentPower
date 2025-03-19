@@ -3,21 +3,19 @@ package org.agentpower.service.secure.codec;
 import cn.hutool.core.util.ArrayUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
 import org.springframework.lang.NonNull;
 import org.springframework.web.method.HandlerMethod;
 
 import java.util.*;
 
+@Getter
 public class InputCodec {
 
     private final Decoder decoder;
 
     public InputCodec(Decoder decoder) {
         this.decoder = decoder;
-    }
-
-    public Decoder getDecoder() {
-        return decoder;
     }
 
     public void decode(@NonNull HttpServletRequest request,

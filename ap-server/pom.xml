@@ -10,6 +10,11 @@
     </parent>
 
     <artifactId>ap-server</artifactId>
+    <packaging>pom</packaging>
+    <modules>
+        <module>ap-server-api</module>
+        <module>ap-server-service</module>
+    </modules>
 
     <properties>
     </properties>
@@ -49,6 +54,10 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-neo4j</artifactId>
         </dependency>
 
@@ -73,39 +82,5 @@
             <artifactId>spring-ai-tika-document-reader</artifactId>
         </dependency>
     </dependencies>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-<!--                    <excludes>-->
-<!--                        <exclude>*.yaml</exclude>-->
-<!--                    </excludes>-->
-                </configuration>
-            </plugin>
-            <!-- 将所有依赖解压到jar包中 可能这样执行比较快 未验证 -->
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>${project.artifactId}</id>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                        <phase>package</phase>
-                        <configuration>
-                            <finalName>agent-power-server</finalName>
-                            <descriptors>
-                                <descriptor>src/main/assembly/ap-server.xml</descriptor>
-                            </descriptors>
-                            <appendAssemblyId>false</appendAssemblyId>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 
 </project>
