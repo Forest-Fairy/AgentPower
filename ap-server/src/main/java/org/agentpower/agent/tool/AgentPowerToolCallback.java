@@ -4,11 +4,14 @@ import com.alibaba.fastjson2.JSON;
 import jakarta.annotation.Nonnull;
 import org.agentpower.agent.AgentChatHelper;
 import org.agentpower.api.AgentPowerFunctionDefinition;
+import org.agentpower.api.Constants;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.api.StatusCode;
 import org.agentpower.api.message.ChatMessageObject;
+import org.agentpower.configuration.ConfigurationService;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.service.Globals;
+import org.agentpower.service.secure.recognization.LoginUserVo;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.definition.ToolDefinition;
 import sun.misc.Unsafe;
@@ -19,15 +22,17 @@ import java.util.concurrent.*;
 public class AgentPowerToolCallback implements ToolCallback {
 
     private final AgentPowerToolCallbackResolver resolver;
+    private final ConfigurationService configurationService;
     private final String requestId;
-    private final String loginUserId;
+    private final LoginUserVo loginUser;
     private final ToolDefinition toolDefinition;
     private final ClientServiceConfiguration clientServiceConfiguration;
 
-    public AgentPowerToolCallback(AgentPowerToolCallbackResolver resolver, ClientServiceConfiguration clientServiceConfiguration, String functionName) {
+    public AgentPowerToolCallback(AgentPowerToolCallbackResolver resolver, ConfigurationService configurationService, ClientServiceConfiguration clientServiceConfiguration, String functionName) {
         this.resolver = resolver;
+        this.configurationService = configurationService;
         this.requestId = Globals.WebContext.getRequestId();
-        this.loginUserId = Globals.User.getLoginUser().getId();
+        this.loginUser = Globals.User.getLoginUser();
         this.clientServiceConfiguration = clientServiceConfiguration;
         // TODO 如果requestId 是空 导致获取不到函数定义 那就只能重新发一条消息给客户端以拉取客户端的函数信息
         AgentPowerFunctionDefinition agentPowerFunctionDefinition = AgentChatHelper.Runtime.getFunctionDefinition(requestId, clientServiceConfiguration.getId(), functionName);
@@ -54,7 +59,7 @@ public class AgentPowerToolCallback implements ToolCallback {
         }
         if (callResult.type().equals(FunctionRequest.CallResult.Type.AGENT)) {
             // 继续调用大模型
-            return resolver.callPrompt(requestId, loginUserId, clientServiceConfiguration,
+            return resolver.callPrompt(requestId, loginUser, clientServiceConfiguration,
                     JSON.parseObject(callResult.content(), ChatMessageObject.class));
         }
         throw new IllegalArgumentException(toolDefinition.name() + " 响应了未知结果类型：" + callResult.type() + " 结果内容为：" + callResult.content());
@@ -64,8 +69,8 @@ public class AgentPowerToolCallback implements ToolCallback {
 
     private FunctionRequest.CallResult callClientFunction(String toolInput) {
         try {
-            Globals.Client.sendMessage(requestId, FunctionRequest.Event.FUNC_CALL, buildEventData(
-                    requestId, loginUserId, FunctionRequest.Event.FUNC_CALL,
+            Globals.Client.sendMessage(requestId, Constants.Event.FUNC_CALL, buildEventData(
+                    configurationService, requestId, loginUser, Constants.Event.FUNC_CALL,
                     toolDefinition.name(), clientServiceConfiguration, toolInput));
         } catch (Exception e) {
             return FunctionRequest.errorCallResult(e);
@@ -110,20 +115,18 @@ public class AgentPowerToolCallback implements ToolCallback {
     private static String wrapFunctionDefinitionKey(String requestId, String functionName) {
         return requestId + "_" + functionName;
     }
-    private static String buildEventData(
-            String requestId, String loginUserId, String eventType, String toolName,
+    private static String buildEventData(ConfigurationService configurationService,
+            String requestId, LoginUserVo loginUser, String eventType, String toolName,
             ClientServiceConfiguration clientServiceConfiguration, String toolParams) {
+        Map<String, Object> header = configurationService
+                .buildClientServiceHeader(clientServiceConfiguration, loginUser);
+        Map<String, Object> body = configurationService
+                .buildClientServiceBody(clientServiceConfiguration, Map.of(
+                        Constants.Body.TOOL_NAME, toolName,
+                        Constants.Body.TOOL_PARAMS, toolParams));
         return JSON.toJSONString(
-                new FunctionRequest(
-                        requestId,
-                        eventType,
-                        Map.of(
-                                "configurationId", clientServiceConfiguration.getId(),
-                                "serviceUrl", clientServiceConfiguration.getServiceUrl(),
-                                "headers", clientServiceConfiguration.getHeaders(),
-                                "auth", clientServiceConfiguration.generateAuthorization(loginUserId),
-                                "toolName", toolName,
-                                "toolParams", toolParams)
-                ));
+                new FunctionRequest(requestId, eventType,
+                        FunctionRequest.Header.of(header),
+                        FunctionRequest.Body.of(body)));
     }
 }

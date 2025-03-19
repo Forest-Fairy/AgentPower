@@ -8,9 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.agentpower.service.secure.recognization.LoginUserVo;
 
-import java.util.Base64;
 
 /**
  * 用户客户端服务配置
@@ -26,28 +24,23 @@ public class ClientServiceConfiguration {
     private String name;
     private String userId;
 
-    /* 客户端访问代理服务的url */
+    /** 客户端访问代理服务的url */
     private String serviceUrl;
-    /* 客户端访问代理服务的请求头 */
+    /** 客户端访问代理服务的请求头 */
     private String headers;
-    /* 代理服务公钥 用户信息加密后交给浏览器客户端 */
-    private String servicePublicKey;
+    /** 代理服务加密方式 */
+    private String serviceAlgorithm;
+    /** 代理服务公钥 信息加密后发送 */
+    private String serviceKeyForEncode;
+    /** 客户端的token认证类型 */
+    private String recognizerType;
+    /** 客户端认证头 */
+    private String recognizerHeaderField;
+    /** 客户端秘钥等信息 */
+    private String recognizerProperties;
 
     private String createdTime;
     private String createdBy;
     private String updatedTime;
     private String updatedBy;
-
-    public String generateAuthorization(String requestId, LoginUserVo user) {
-//        JwtUtil.createJWT(
-//                requestId,
-//                JSON.toJSONString(user),
-//                "client-"+id,
-//                Constants.JWT_EXPIRED_DURATION,
-//                null,
-//                Constants.JWT_SECRET
-//        )
-//        return RSAUtil.encrypt(Constants.CONFIG_PREFIX + userId, RSAUtil.generatePublicKey(RSAUtil.ALGORITHM, servicePublicKey));
-        return "";
-    }
 }

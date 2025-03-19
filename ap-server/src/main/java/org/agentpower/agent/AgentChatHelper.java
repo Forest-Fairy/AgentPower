@@ -2,12 +2,10 @@ package org.agentpower.agent;
 
 import com.alibaba.fastjson2.JSON;
 import lombok.Data;
+import lombok.extern.log4j.Log4j2;
 import org.agentpower.agent.tool.AgentPowerChatModelDelegate;
 import org.agentpower.agent.model.ChatMessageModel;
-import org.agentpower.api.AgentPowerFunctionDefinition;
-import org.agentpower.api.AgentPowerServer;
-import org.agentpower.api.FunctionRequest;
-import org.agentpower.api.StatusCode;
+import org.agentpower.api.*;
 import org.agentpower.api.message.ChatMediaResource;
 import org.agentpower.api.message.ChatMediaResourceProvider;
 import org.agentpower.common.Tuples;
@@ -17,6 +15,7 @@ import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.configuration.resource.ResourceProviderConfiguration;
 import org.agentpower.configuration.resource.provider.ResourceProvider;
 import org.agentpower.service.Globals;
+import org.agentpower.service.secure.recognization.LoginUserVo;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.model.Media;
@@ -24,10 +23,12 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.util.MimeType;
 import sun.misc.Unsafe;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
+@Log4j2
 public class AgentChatHelper {
     private AgentChatHelper() {}
     private static final Map<String, ChatRuntime> CHAT_RUNTIME_CACHE = new ConcurrentHashMap<>();
@@ -112,7 +113,7 @@ public class AgentChatHelper {
 
 
         private static final Map<String, Object> FUNCTIONS_CACHE = new ConcurrentHashMap<>();
-        public static Map<String, AgentPowerFunctionDefinition> getFunctions(String requestId, String userId, ClientServiceConfiguration clientServiceConfiguration) {
+        public static Map<String, AgentPowerFunctionDefinition> getFunctions(ConfigurationService configurationService, String requestId, LoginUserVo user, ClientServiceConfiguration clientServiceConfiguration) {
             if (clientServiceConfiguration == null) {
                 // 未启用智能体
                 return Map.of();
@@ -125,17 +126,18 @@ public class AgentChatHelper {
                 // 从缓存获取到了 如果是空集合 表示客户端没有智能体函数
                 return functionMap;
             }
-            Globals.Client.sendMessage(requestId, FunctionRequest.Event.LIST_FUNCTIONS,
-                    JSON.toJSONString(
-                            new FunctionRequest(
-                                    requestId,
-                                    FunctionRequest.Event.LIST_FUNCTIONS,
-                                    Map.of(
-                                            "configurationId", clientServiceConfiguration.getId(),
-                                            "serviceUrl", clientServiceConfiguration.getServiceUrl(),
-                                            "headers", clientServiceConfiguration.getHeaders(),
-                                            "auth", clientServiceConfiguration.generateAuthorization(userId))
-                            )));
+            Map<String, Object> header = configurationService.buildClientServiceHeader(
+                    clientServiceConfiguration, user);
+            Map<String, Object> body = configurationService.buildClientServiceBody(
+                    clientServiceConfiguration, null);
+            try {
+                Globals.Client.sendMessage(requestId, Constants.Event.LIST_FUNCTIONS,
+                        JSON.toJSONString(new FunctionRequest(requestId, Constants.Event.LIST_FUNCTIONS,
+                                FunctionRequest.Header.of(header), FunctionRequest.Body.of(body))));
+            } catch (IOException e) {
+                Globals.Client.trySendMessage(requestId, Constants.Event.ALERT_FAILED, "客户端增强服务获取方法集失败");
+                log.error(requestId + " 发送消息给客户端出错", e);
+            }
             String functionDefinitionKey = requestId;
             try {
                 String functionsContent = CompletableFuture.supplyAsync(() -> {

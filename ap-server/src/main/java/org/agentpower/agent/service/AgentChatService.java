@@ -2,16 +2,19 @@ package org.agentpower.agent.service;
 
 import com.alibaba.fastjson2.JSON;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.agentpower.agent.AgentChatHelper;
 import org.agentpower.agent.tool.AgentPowerChatModelDelegate;
 import org.agentpower.agent.model.ChatMessageModel;
 import org.agentpower.agent.repo.AgentSessionRepo;
 import org.agentpower.agent.repo.ChatMessageRepo;
 import org.agentpower.api.AgentPowerFunctionDefinition;
+import org.agentpower.api.Constants;
 import org.agentpower.api.FunctionRequest;
 import org.agentpower.configuration.ConfigurationService;
 import org.agentpower.configuration.agent.AgentModelConfiguration;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
+import org.agentpower.service.Globals;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -26,8 +29,10 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
+import java.io.IOException;
 import java.util.*;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class AgentChatService {
@@ -47,7 +52,7 @@ public class AgentChatService {
         if (hasClientService) {
             ClientServiceConfiguration clientServiceConfiguration = configurationService
                     .getClientServiceConfiguration(messageModel.getClientAgentServiceConfigurationId());
-            functions = AgentChatHelper.Prompt.getFunctions(requestId, messageModel.getCreatedBy(), clientServiceConfiguration);
+            functions = AgentChatHelper.Prompt.getFunctions(configurationService, requestId, Globals.User.getLoginUser(), clientServiceConfiguration);
             AgentChatHelper.Registry.startConversation(requestId, messageModel, chatModel, clientServiceConfiguration, functions);
         } else {
             functions = Map.of();
@@ -56,7 +61,7 @@ public class AgentChatService {
                 Optional.ofNullable(agentModelConfiguration.getChatMemoryCouplesCount()).orElse(5);
         return prompt(chatModel, messageModel, functions.keySet(), chatMemoryCouplesCount)
                 .map(chatResponse -> ServerSentEvent.builder(JSON.toJSONString(chatResponse))
-                        .event(FunctionRequest.Event.AGENT_CALL)
+                        .event(Constants.Event.AGENT_CALL)
                         .build())
                 .doAfterTerminate(() -> AgentChatHelper.Registry.endConversation(requestId));
     }

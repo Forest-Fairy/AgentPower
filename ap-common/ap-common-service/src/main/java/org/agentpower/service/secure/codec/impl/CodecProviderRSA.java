@@ -24,14 +24,6 @@ public class CodecProviderRSA extends CodecProvider {
     }
 
     @Override
-    protected Decoder GenerateMyCodec(String algorithm, String keyForEncode, String keyForDecode) {
-        PublicKey publicKey = RSAUtil.generatePublicKey(algorithm, FileUtil.readBytes(keyForEncode));
-        PrivateKey privateKey = RSAUtil.generatePrivateKey(algorithm, FileUtil.readBytes(keyForDecode));
-        RSA rsa = RSAUtil.create(publicKey, privateKey);
-        return new MyCodec(rsa);
-    }
-
-    @Override
     protected Decoder generateDecoder(String algorithm, String keyForDecode) {
         PrivateKey privateKey = RSAUtil.generatePrivateKey(algorithm,
                 Base64.getDecoder().decode(keyForDecode));

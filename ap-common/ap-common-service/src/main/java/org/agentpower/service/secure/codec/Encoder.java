@@ -12,6 +12,9 @@ public interface Encoder {
     byte[] encode(byte[] data);
 
     default String encodeToBase64Str(String data) {
+        if (data == null) {
+            return null;
+        }
         return Base64.getEncoder().encodeToString(
                 this.encode(data.getBytes(StandardCharsets.UTF_8)));
     }

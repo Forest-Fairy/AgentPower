@@ -37,14 +37,14 @@ public abstract class AuthRequired {
             }
         }
         void authAdmin(LoginUserVo loginUser) {
-            if (loginUser.getRole() == null || ! SearchUtils.containsAnyTypes(
-                    loginUser.getRole(), ";", "ADMIN")) {
+            if (loginUser.getPrivileges() == null || ! SearchUtils.containsAnyTypes(
+                    loginUser.getPrivileges(), ";", "ADMIN")) {
                 throw PermissionInvalidException.invalidPermission("没有权限访问");
             }
         }
         void authManager(LoginUserVo loginUser) {
-            if (loginUser.getRole() == null || ! SearchUtils.containsAnyTypes(
-                    loginUser.getRole(), ";", "MANAGER", "ADMIN")) {
+            if (loginUser.getPrivileges() == null || ! SearchUtils.containsAnyTypes(
+                    loginUser.getPrivileges(), ";", "MANAGER", "ADMIN")) {
                 throw PermissionInvalidException.invalidPermission("没有权限访问");
             }
         }

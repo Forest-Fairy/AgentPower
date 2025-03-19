@@ -10,6 +10,7 @@ import org.agentpower.api.message.ChatMessageObject;
 import org.agentpower.configuration.ConfigurationService;
 import org.agentpower.configuration.client.ClientServiceConfiguration;
 import org.agentpower.service.Globals;
+import org.agentpower.service.secure.recognization.LoginUserVo;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.function.FunctionCallback;
 import org.springframework.ai.tool.resolution.ToolCallbackResolver;
@@ -17,6 +18,7 @@ import org.springframework.context.support.GenericApplicationContext;
 import reactor.core.publisher.Flux;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @AllArgsConstructor
@@ -33,7 +35,7 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
         }
         return Optional.ofNullable(functionNameInfo.clientServiceId)
                 .map(configurationService::getClientServiceConfiguration)
-                .map(cs -> new AgentPowerToolCallback(this, cs, functionNameInfo.functionName))
+                .map(cs -> new AgentPowerToolCallback(this, configurationService, cs, functionNameInfo.functionName))
                 .orElse(null);
     }
 
@@ -41,7 +43,7 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
         return new Builder();
     }
 
-    public String callPrompt(String requestId, String loginUserId,
+    public String callPrompt(String requestId, LoginUserVo user,
                              ClientServiceConfiguration clientServiceConfiguration,
                              ChatMessageObject newMessageObject) {
         AgentPowerChatModelDelegate chatModelDelegate = AgentChatHelper.Runtime.getChatModelDelegate(requestId);
@@ -60,6 +62,7 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
         } else {
             clientServiceToUse = clientServiceConfiguration;
         }
+        Set<String> functions = AgentChatHelper.Prompt.getFunctions(configurationService, requestId, user, clientServiceToUse).keySet();
         return Optional.of(ChatMessageModel.builder())
                 .map(builder -> builder
                         .requestId(Globals.WebContext.getRequestId())
@@ -69,13 +72,13 @@ public class AgentPowerToolCallbackResolver implements ToolCallbackResolver {
                         .agentModelConfigurationId(chatModelToUse.getAgentModelConfiguration().getId())
                         .clientAgentServiceConfigurationId(clientServiceToUse.getId())
                         .resourceProviders(JSON.toJSONString(newMessageObject.setting().resourceProviders()))
-                        .userId(loginUserId)
-                        .createdBy(loginUserId)
+                        .userId(user.getId())
+                        .createdBy(user.getId())
                         .createdTime(DateUtil.now())
                         .build())
-                .map(messageModel -> chatService.prompt(chatModelToUse, messageModel,
-                        AgentChatHelper.Prompt.getFunctions(requestId, loginUserId, clientServiceToUse).keySet(),
-                        messageModel.getChatMemoryCouplesCount()))
+                .map(messageModel ->
+                        chatService.prompt(chatModelToUse, messageModel, functions,
+                                messageModel.getChatMemoryCouplesCount()))
                 .stream().flatMap(Flux::toStream)
                 .map(res -> res.getResult().getOutput().getText())
                 .collect(Collectors.joining());

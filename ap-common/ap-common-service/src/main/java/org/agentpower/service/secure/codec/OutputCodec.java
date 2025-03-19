@@ -13,12 +13,17 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.util.*;
 
-public class OutputEncoder {
+public class OutputCodec {
     /** 请求方如需加密 则利用接收方的公钥对请求头里的公钥加密 因此需要接收方的解码器来解密 */
     private final Decoder receiverDecoder;
-    public OutputEncoder(Decoder decoder) {
+    public OutputCodec(Decoder decoder) {
         this.receiverDecoder = decoder;
     }
+
+    public Decoder getReceiverDecoder() {
+        return receiverDecoder;
+    }
+
     /**
      * 加密(接收方公钥，发起方公钥) => 密文
      * 解密(接收方私钥，密文) => 发起方公钥
@@ -32,7 +37,7 @@ public class OutputEncoder {
             return;
         }
         // 从请求头获取发起方公钥 构建 Encoder
-        String publicKey = Optional.ofNullable(request.getHeader(Constants.HEADER_PUBLIC_KEY))
+        String publicKey = Optional.ofNullable(request.getHeader(Constants.Header.ENCODED_KEY))
                 .filter(StringUtils::isNotBlank)
                 .map(receiverDecoder::decodeToUtf8Str)
                 .orElse(null);
@@ -40,7 +45,7 @@ public class OutputEncoder {
             // 请求头未传入公钥则明文传输
             return;
         }
-        String algorithm = request.getHeader(Constants.HEADER_ALGORITHM);
+        String algorithm = request.getHeader(Constants.Header.ALGORITHM);
         Encoder encoder = CodecProvider.GenerateEncoder(algorithm, publicKey);
         Map<String, String[]> params = request.getParameterMap();
         Map<String, String> fieldsMapping = CodecHelper.toFieldsMapping(encodeRequired);

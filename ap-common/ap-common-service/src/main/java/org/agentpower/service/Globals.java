@@ -7,6 +7,8 @@ import org.agentpower.service.secure.recognization.LoginUserVo;
 import org.springframework.http.codec.ServerSentEvent;
 
 import java.io.IOException;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Globals {
     private Globals() {}
@@ -18,8 +20,27 @@ public class Globals {
     }
 
     public static class Client {
-        public static void sendMessage(String requestId, String event, String data) throws IOException {
+        public static void sendMessage(
+                String requestId, String event, String data) throws IOException {
             SecureServiceImpl.sendEvent(ServerSentEvent.builder().id(requestId).event(event).data(data).build());
+        }
+        public static <X extends Throwable> void sendMessage(
+                String requestId, String event, String data,
+                Function<IOException, ? extends X> exceptionSupplier) throws X {
+            try {
+                sendMessage(requestId, event, data);
+            } catch (IOException e) {
+                if (exceptionSupplier != null) {
+                    X throwable = exceptionSupplier.apply(e);
+                    if (throwable != null) {
+                        throw throwable;
+                    }
+                }
+            }
+        }
+        public static void trySendMessage(
+                String requestId, String event, String data) {
+            sendMessage(requestId, event, data, null);
         }
     }
 

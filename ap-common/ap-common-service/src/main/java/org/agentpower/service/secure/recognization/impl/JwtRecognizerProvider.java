@@ -4,6 +4,7 @@ import cn.hutool.core.lang.UUID;
 import cn.hutool.jwt.JWT;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONObject;
+import lombok.Data;
 import org.agentpower.api.Constants;
 import org.agentpower.common.JwtUtil;
 import org.agentpower.service.secure.recognization.LoginUserVo;
@@ -28,20 +29,20 @@ public class JwtRecognizerProvider extends RecognizerProvider {
 
     @Override
     protected Recognizer generateRecognizer(String headerField, JSONObject properties) {
-        return new JwtRecognizer(headerField, properties.getString("secret"),
-                properties.getString("issuer"), properties.getLong("expiration"));
+        return new JwtRecognizer(headerField, properties == null
+                ? new JwtProperties() : properties.to(JwtProperties.class));
     }
 
     public static class JwtRecognizer extends Recognizer {
         private final byte[] secret;
         private final String issuer;
         private final long expiration;
-        public JwtRecognizer(String headerField, String secret,
-                             String issuer, Long expiration) {
+        public JwtRecognizer(String headerField, JwtProperties jwtProperties) {
             super(headerField);
-            this.secret = Base64.getDecoder().decode(secret);
-            this.issuer = issuer == null ? "agent-power" : issuer;
-            this.expiration = (expiration == null ? 60 * 60 * 24 * 7 : expiration) * 1000;
+            this.secret = Base64.getDecoder().decode(jwtProperties.secret);
+            this.issuer = jwtProperties.issuer == null ? "agent-power" : jwtProperties.issuer;
+            this.expiration = (jwtProperties.expiration == null
+                    ? 60 * 60 * 24 * 7 : jwtProperties.expiration) * 1000;
         }
 
         @Override
@@ -63,5 +64,12 @@ public class JwtRecognizerProvider extends RecognizerProvider {
                     issuer, expiration,
                     Map.of(), secret);
         }
+    }
+
+    @Data
+    public static class JwtProperties {
+        private String secret;
+        private String issuer;
+        private Long expiration;
     }
 }

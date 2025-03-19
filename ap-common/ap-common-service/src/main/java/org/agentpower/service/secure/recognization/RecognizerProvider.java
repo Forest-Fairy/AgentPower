@@ -27,9 +27,11 @@ public abstract class RecognizerProvider {
     protected abstract Recognizer generateRecognizer(String headerField, JSONObject properties);
 
     public static Recognizer generateRecognizer(String type, String headerField, JSONObject properties) {
-        return Registry.providers.computeIfAbsent(type, (k) -> DefaultProvider.INSTANCE)
+        return Optional.ofNullable(Registry.providers.get(type))
+                .orElse(DefaultProvider.INSTANCE)
                 .generateRecognizer(headerField, properties);
     }
+
     public static class Registry {
         private static final Map<String, RecognizerProvider> providers = new HashMap<>();
         public static void register(String type, RecognizerProvider provider) {

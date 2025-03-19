@@ -4,6 +4,7 @@ import org.springframework.util.Assert;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class CodecProvider {
     public final String[] names;
@@ -31,24 +32,20 @@ public abstract class CodecProvider {
             CodecProvider old = PROVIDER_MAP.put(type, provider);
             if (old != null) {
                 PROVIDER_MAP.put(type, old);
-                throw new IllegalArgumentException("编码器供应者冲突：" + type);
+                throw new IllegalArgumentException("编解码供应者冲突：" + type);
             }
         }
     }
 
     public static Decoder GenerateDecoder(String type, String keyForDecode) {
-        return Registry.PROVIDER_MAP.computeIfAbsent(type,
-                        (k) -> {
-                            throw new IllegalArgumentException("编码器供应者不存在：" + type);
-                        })
+        return Optional.ofNullable(Registry.PROVIDER_MAP.get(type))
+                .orElseThrow(() -> new IllegalArgumentException("解码器供应者不存在：" + type))
                 .generateDecoder(type, keyForDecode);
     }
 
     public static Encoder GenerateEncoder(String type, String keyForEncode) {
-        return Registry.PROVIDER_MAP.computeIfAbsent(type,
-                        (k) -> {
-                            throw new IllegalArgumentException("编码器供应者不存在：" + type);
-                        })
+        return Optional.ofNullable(Registry.PROVIDER_MAP.get(type))
+                .orElseThrow(() -> new IllegalArgumentException("编码器供应者不存在：" + type))
                 .generateEncoder(type, keyForEncode);
     }
 }

@@ -3,6 +3,7 @@ package org.agentpower.client;
 import lombok.AllArgsConstructor;
 import org.agentpower.api.AgentPowerFunctionDefinition;
 import org.agentpower.api.FunctionRequest;
+import org.agentpower.api.info.ClientServiceConfigurationInfo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -30,6 +31,9 @@ public class AgentPowerClientController {
         return clientService.listFunctions();
     }
 
-    public
+    @GetMapping("getClientInfo")
+    public ClientServiceConfigurationInfo getClientInfo() {
+
+    }
 
 }

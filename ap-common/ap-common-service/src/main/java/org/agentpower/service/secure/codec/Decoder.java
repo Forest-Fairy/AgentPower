@@ -12,6 +12,9 @@ public interface Decoder {
     byte[] decode(byte[] decoded);
 
     default String decodeToUtf8Str(String base64Str) {
+        if (base64Str == null) {
+            return null;
+        }
         return new String(this.decode(Base64.getDecoder().decode(base64Str)), StandardCharsets.UTF_8);
     }
 }
