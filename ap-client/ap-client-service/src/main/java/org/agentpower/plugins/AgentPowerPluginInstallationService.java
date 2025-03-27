@@ -7,7 +7,9 @@ import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import org.agentpower.client.AgentPowerClientServiceImpl;
 import org.agentpower.common.Tuples;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.beans.factory.support.BeanDefinitionBuilder;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
@@ -37,7 +39,7 @@ public class AgentPowerPluginInstallationService {
     private static final Map<String, Tuples._2<
             PluginState, Tuples._3<AgentPowerPluginClassLoader, Map<String, Object>, Long>
             >> PLUGIN_INFO_MAP = new HashMap<>();
-    private final ConfigurableApplicationContext applicationContext;
+    private final GenericApplicationContext applicationContext;
     private final AgentPowerClientServiceImpl clientService;
     private final ThreadPoolExecutor executorService;
     private final File pluginPath;
@@ -46,7 +48,7 @@ public class AgentPowerPluginInstallationService {
     private final File pluginFailedPath;
     private final File pluginImportPath;
 
-    public AgentPowerPluginInstallationService(ConfigurableApplicationContext applicationContext,
+    public AgentPowerPluginInstallationService(GenericApplicationContext applicationContext,
                                                AgentPowerClientServiceImpl clientService,
                                                File pluginPath, File pluginDetectPath,
                                                File pluginRecyclePath, File pluginFailedPath,
@@ -491,7 +493,7 @@ public class AgentPowerPluginInstallationService {
         }
         return null;
     }
-    private static <T> T TEST(Supplier<T> supplier, Function<Throwable, T> ifError) {
+    private static <T> T TESTER(Supplier<T> supplier, Function<Throwable, T> ifError) {
         try {
             return supplier.get();
         } catch (Throwable e) {
@@ -541,11 +543,11 @@ public class AgentPowerPluginInstallationService {
         }
         return Optional.ofNullable(
                         ComputeIfNotNull(
-                                () -> TEST(() -> clazz.getAnnotation(Component.class).value(), e -> null),
-                                () -> TEST(() -> clazz.getAnnotation(Controller.class).value(), e -> null),
-                                () -> TEST(() -> clazz.getAnnotation(RestController.class).value(), e -> null),
-                                () -> TEST(() -> clazz.getAnnotation(Service.class).value(), e -> null),
-                                () -> TEST(() -> clazz.getAnnotation(Repository.class).value(), e -> null)))
+                                () -> TESTER(() -> clazz.getAnnotation(Component.class).value(), e -> null),
+                                () -> TESTER(() -> clazz.getAnnotation(Controller.class).value(), e -> null),
+                                () -> TESTER(() -> clazz.getAnnotation(RestController.class).value(), e -> null),
+                                () -> TESTER(() -> clazz.getAnnotation(Service.class).value(), e -> null),
+                                () -> TESTER(() -> clazz.getAnnotation(Repository.class).value(), e -> null)))
                 .map(name -> name.isBlank() ? clazz.getSimpleName() : name)
                 .orElse(null);
     }
@@ -556,7 +558,7 @@ public class AgentPowerPluginInstallationService {
      * @param springClasses bean 名称 和 类
      * @return 注册后的bean名称和bean对象
      */
-    private static void RegisterBeans(ConfigurableApplicationContext applicationContext,
+    private static void RegisterBeans(GenericApplicationContext applicationContext,
                                       AgentPowerClientServiceImpl clientService,
                                       Map<String, Object> registeredBeans, Map<String, Class<?>> springClasses) {
         // 生成的每一个对象 如果是AgentPowerFunction的实现类，则调用clientService.addTool方法
@@ -565,10 +567,10 @@ public class AgentPowerPluginInstallationService {
                     .filter(entry -> {
                         String name = entry.getKey();
                         Class<?> clazz = entry.getValue();
-                        Object beanInstance = applicationContext.getBeanFactory().createBean(clazz);
-                        applicationContext.getBeanFactory().registerSingleton(name, beanInstance);
-                        registeredBeans.put(name, beanInstance);
-                        return clientService.addTool(name, beanInstance);
+                        DefaultListableBeanFactory beanFactory = applicationContext.getDefaultListableBeanFactory();
+                        BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(clazz);
+                        beanFactory.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
+                        return clientService.addTool(name, beanFactory.getBean(name, clazz));
                     })
                     .count();
             if (registeredFunctions == 0L) {
@@ -582,7 +584,7 @@ public class AgentPowerPluginInstallationService {
      * 卸载spring中的bean
      * @param beans bean名称
      */
-    private static void UnregisterBeans(ConfigurableApplicationContext applicationContext,
+    private static void UnregisterBeans(GenericApplicationContext applicationContext,
                                         AgentPowerClientServiceImpl clientService,
                                         Map<String, Object> beans) {
         if (CollectionUtils.isEmpty(beans)) {
@@ -596,7 +598,7 @@ public class AgentPowerPluginInstallationService {
                         clientService.removeTool(beanName);
                     }
                     // 从Spring容器中移除Bean
-                    applicationContext.getBeanFactory().destroyBean(bean);
+                    applicationContext.getDefaultListableBeanFactory().destroyBean(bean);
                 } catch (Exception e) {
                     // 记录异常
                     LogError(e, "卸载Bean {} 时出错: {}", beanName, e.getMessage());
